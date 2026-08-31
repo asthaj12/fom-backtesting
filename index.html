@@ -1,0 +1,1111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>FOM 3.0 — Demand Correction Targeting Redesign · Demo</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+<style>
+/* ── Design tokens ────────────────────────────────────────── */
+:root{
+  --s0:#f9f9f7;--s1:#fcfcfb;--ink:#0b0b0b;--sec:#52514e;--muted:#898781;
+  --grid:#e1e0d9;--border:rgba(11,11,11,.10);
+  --blue:#6366f1;--orange:#eb6834;--aqua:#1baf7a;--yellow:#eda100;
+  --pink:#e87ba4;--violet:#4a3aa7;--red:#e34948;
+  --good:#0ca30c;--warn:#fab219;--crit:#d03b3b;
+}
+
+/* ── Reset & base ─────────────────────────────────────────── */
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:system-ui,-apple-system,"Segoe UI",sans-serif;font-size:13px;background:var(--s0);color:var(--ink);min-height:100vh;}
+
+/* ── Sticky nav ───────────────────────────────────────────── */
+.snav{position:sticky;top:0;z-index:200;background:rgba(255,255,255,.96);backdrop-filter:blur(12px);border-bottom:1px solid #e2e8f0;padding:0 20px;display:flex;align-items:center;gap:6px;height:48px;}
+.snav-brand{font-size:13px;font-weight:800;color:#0f172a;text-decoration:none;margin-right:16px;white-space:nowrap;}
+.snav-brand span{color:#6366f1;}
+.snav-items{display:flex;align-items:center;gap:2px;flex:1;}
+.snav-link{padding:5px 10px;border-radius:5px;font-size:12px;font-weight:500;color:#475569;text-decoration:none;white-space:nowrap;transition:background .12s,color .12s;}
+.snav-link:hover{background:rgba(99,102,241,.07);color:#0f172a;}
+.sndrop{position:relative;}
+.sndrop-toggle{display:flex;align-items:center;gap:4px;padding:5px 10px;border-radius:5px;font-size:12px;font-weight:500;color:#475569;cursor:pointer;user-select:none;white-space:nowrap;transition:background .12s,color .12s;}
+.sndrop-toggle:hover{background:rgba(99,102,241,.07);color:#0f172a;}
+.sndrop-toggle svg{width:9px;height:9px;transition:transform .18s;}
+.sndrop:hover .sndrop-toggle svg{transform:rotate(180deg);}
+.sndrop-menu{position:absolute;top:calc(100% + 6px);left:0;background:#fff;border:1px solid #e2e8f0;border-radius:8px;padding:5px;min-width:220px;box-shadow:0 12px 40px rgba(0,0,0,.14);opacity:0;visibility:hidden;pointer-events:none;transform:translateY(-4px);transition:opacity .15s,transform .15s,visibility .15s;}
+.sndrop:hover .sndrop-menu{opacity:1;visibility:visible;pointer-events:auto;transform:translateY(0);}
+.sndrop-item{display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:6px;font-size:11px;font-weight:500;color:#475569;text-decoration:none;transition:background .1s,color .1s;}
+.sndrop-item:hover{background:rgba(99,102,241,.09);color:#0f172a;}
+.sndrop-icon{width:24px;height:24px;border-radius:5px;display:flex;align-items:center;justify-content:center;font-size:12px;flex-shrink:0;}
+.sndrop-lbl{font-weight:600;color:#0f172a;font-size:11px;}
+.sndrop-sub{font-size:10px;color:#94a3b8;margin-top:1px;}
+.sndrop-div{height:1px;background:#e2e8f0;margin:4px 2px;}
+.snav-right{margin-left:auto;display:flex;align-items:center;gap:6px;flex-shrink:0;}
+.snav-badge{padding:4px 12px;border-radius:5px;font-size:11px;font-weight:600;border:1px solid #e2e8f0;color:#475569;text-decoration:none;transition:border-color .12s,color .12s,background .12s;}
+.snav-badge:hover{background:#eef2ff;border-color:#6366f1;color:#6366f1;}
+
+/* ── Banners ──────────────────────────────────────────────── */
+.conf-banner{background:#f1f5f9;border-bottom:1px solid #cbd5e1;padding:10px 32px;font-size:11px;color:#475569;text-align:center;}
+.demo-banner{background:#fffbeb;border-bottom:2px solid #f59e0b;padding:8px 20px;font-size:12px;font-weight:600;color:#92400e;display:flex;align-items:center;gap:8px;}
+.demo-banner .db-right{margin-left:auto;font-weight:400;color:#78350f;font-size:11px;}
+
+/* ── Tab nav ──────────────────────────────────────────────── */
+.tab-nav{background:var(--s1);border-bottom:1px solid var(--grid);padding:0 20px;display:flex;gap:2px;overflow-x:auto;}
+.tab-btn{padding:10px 16px;border:none;background:none;font-size:12px;font-weight:500;color:var(--muted);cursor:pointer;border-bottom:2px solid transparent;white-space:nowrap;transition:color .15s,border-color .15s;}
+.tab-btn:hover{color:var(--sec);}
+.tab-btn.active{color:var(--blue);border-bottom-color:var(--blue);font-weight:600;}
+
+/* ── Main ─────────────────────────────────────────────────── */
+main{padding:20px;max-width:1400px;margin:0 auto;}
+.tab-panel{display:none;}
+.tab-panel.active{display:block;}
+
+/* ── KPI row ──────────────────────────────────────────────── */
+.kpi-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:20px;}
+.kpi-card{background:var(--s1);border:1px solid var(--border);border-radius:8px;padding:14px 16px;}
+.kpi-card.accent-blue{border-left:3px solid var(--blue);}
+.kpi-card.accent-good{border-left:3px solid var(--good);}
+.kpi-card.accent-warn{border-left:3px solid var(--warn);}
+.kpi-card.accent-crit{border-left:3px solid var(--crit);}
+.kpi-card.accent-orange{border-left:3px solid var(--orange);}
+.kpi-label{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;}
+.kpi-value{font-size:24px;font-weight:700;color:var(--ink);margin:4px 0 2px;font-variant-numeric:tabular-nums;}
+.kpi-delta{font-size:11px;font-weight:600;}
+.kpi-delta.up{color:var(--good);}
+.kpi-delta.down{color:var(--crit);}
+.kpi-delta.neutral{color:var(--muted);}
+
+/* ── Chart cards ──────────────────────────────────────────── */
+.chart-grid{display:grid;gap:16px;margin-bottom:20px;}
+.chart-grid.cols-2{grid-template-columns:1fr 1fr;}
+.chart-grid.cols-3{grid-template-columns:1fr 1fr 1fr;}
+.chart-card{background:var(--s1);border:1px solid var(--border);border-radius:8px;padding:16px;}
+.chart-card.full{grid-column:1/-1;}
+.card-title{font-size:12px;font-weight:700;color:var(--ink);margin-bottom:3px;}
+.card-sub{font-size:11px;color:var(--muted);margin-bottom:14px;}
+.chart-card canvas{display:block;max-height:280px;}
+
+/* ── Decision summary ─────────────────────────────────────── */
+.decision-summary{border-left:3px solid var(--blue);background:#f8f9ff;padding:16px;border-radius:8px;margin-bottom:20px;}
+.ds-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;}
+.ds-label{font-size:10px;text-transform:uppercase;letter-spacing:.06em;color:var(--blue);font-weight:700;margin-bottom:3px;}
+.ds-val{font-size:13px;color:var(--ink);line-height:1.5;}
+
+/* ── Table ────────────────────────────────────────────────── */
+.tbl-wrap{overflow-x:auto;margin-top:16px;}
+table{width:100%;border-collapse:collapse;font-size:12px;}
+th{padding:8px 10px;text-align:left;font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;border-bottom:1px solid var(--grid);}
+td{padding:8px 10px;border-bottom:1px solid var(--grid);color:var(--sec);}
+tr:last-child td{border-bottom:none;}
+tr:hover td{background:#f4f3f0;}
+.badge{display:inline-flex;align-items:center;padding:2px 7px;border-radius:999px;font-size:10px;font-weight:700;text-transform:uppercase;}
+.badge.good{background:#dcfce7;color:#166534;}
+.badge.warn{background:#fef9c3;color:#92400e;}
+.badge.crit{background:#fee2e2;color:var(--crit);}
+.badge.gray{background:#f1f5f9;color:#475569;}
+
+/* ── Comparison table ─────────────────────────────────────── */
+.comp-table{width:100%;border-collapse:collapse;font-size:12px;}
+.comp-table th{padding:10px 14px;font-size:11px;font-weight:700;color:#fff;text-transform:uppercase;letter-spacing:.04em;}
+.comp-table th:first-child{background:var(--crit);border-radius:6px 0 0 0;}
+.comp-table th:last-child{background:var(--good);border-radius:0 6px 0 0;}
+.comp-table td{padding:10px 14px;border-bottom:1px solid var(--grid);font-size:12px;color:var(--sec);vertical-align:top;}
+.comp-table td:first-child{color:var(--crit);}
+.comp-table td:last-child{color:#166534;}
+.comp-table tr:last-child td{border-bottom:none;}
+.comp-table tr:hover td{background:#f4f3f0;}
+
+/* ── Timeline table ───────────────────────────────────────── */
+.timeline-tbl{width:100%;border-collapse:collapse;font-size:12px;}
+.timeline-tbl td{padding:12px 14px;border-bottom:1px solid var(--grid);vertical-align:top;}
+.timeline-tbl .step-num{width:28px;height:28px;border-radius:50%;background:var(--blue);color:#fff;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.timeline-tbl .step-label{font-weight:700;color:var(--ink);font-size:12px;margin-bottom:2px;}
+.timeline-tbl .step-sub{font-size:11px;color:var(--muted);line-height:1.5;}
+.timeline-tbl td:first-child{width:40px;}
+
+/* ── Funnel / waterfall ───────────────────────────────────── */
+.funnel-wrap{display:flex;flex-direction:column;gap:6px;padding:8px 0;}
+.funnel-step{display:flex;align-items:center;gap:12px;font-size:12px;}
+.funnel-bar-track{flex:1;background:var(--grid);border-radius:4px;height:28px;position:relative;overflow:hidden;}
+.funnel-bar-fill{height:100%;border-radius:4px;display:flex;align-items:center;padding-left:10px;font-size:11px;font-weight:600;color:#fff;transition:width .4s;}
+.funnel-label{width:220px;color:var(--sec);font-size:11px;text-align:right;flex-shrink:0;}
+.funnel-value{width:60px;font-weight:700;color:var(--ink);font-size:12px;flex-shrink:0;}
+
+/* ── Assumptions box ──────────────────────────────────────── */
+.assumptions-box{background:#f4f3f0;border-radius:8px;padding:16px;margin-top:20px;font-size:12px;color:var(--sec);}
+.assumptions-box strong{display:block;margin-bottom:8px;color:var(--ink);}
+.assumptions-box ul{padding-left:18px;}
+.assumptions-box li{margin-bottom:4px;line-height:1.5;}
+
+/* ── Footer ───────────────────────────────────────────────── */
+.page-footer{margin-top:40px;padding:20px;border-top:1px solid var(--grid);font-size:11px;color:var(--muted);display:flex;align-items:center;gap:16px;}
+.page-footer a{color:var(--blue);text-decoration:none;}
+.page-footer a:hover{text-decoration:underline;}
+
+/* ── Responsive ───────────────────────────────────────────── */
+@media(max-width:768px){
+  .chart-grid.cols-2,.chart-grid.cols-3{grid-template-columns:1fr;}
+  .ds-grid{grid-template-columns:1fr;}
+  .kpi-row{grid-template-columns:1fr 1fr;}
+}
+@media(max-width:480px){
+  .kpi-row{grid-template-columns:1fr;}
+  .funnel-label{width:120px;}
+}
+</style>
+</head>
+<body>
+
+<!-- ── Shared nav ─────────────────────────────────────────── -->
+<nav class="snav">
+  <a href="https://asthaj12.github.io" class="snav-brand">AJ<span> · Portfolio</span></a>
+  <div class="snav-items">
+    <div class="sndrop">
+      <div class="sndrop-toggle">Dashboards<svg viewBox="0 0 10 10" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M2 3.5l3 3 3-3"/></svg></div>
+      <div class="sndrop-menu">
+        <a class="sndrop-item" href="https://asthaj12.github.io/forecast-governance/">
+          <div class="sndrop-icon" style="background:rgba(99,102,241,.12)">📊</div>
+          <div><div class="sndrop-lbl">Forecast Governance</div><div class="sndrop-sub">Anomaly triage · Bias correction</div></div>
+        </a>
+        <a class="sndrop-item" href="https://asthaj12.github.io/seasonal-planning/">
+          <div class="sndrop-icon" style="background:rgba(245,158,11,.12)">📅</div>
+          <div><div class="sndrop-lbl">Seasonal Planning</div><div class="sndrop-sub">Demand scenarios · Commitment staging</div></div>
+        </a>
+        <a class="sndrop-item" href="https://asthaj12.github.io/pricing-demand-response/">
+          <div class="sndrop-icon" style="background:rgba(27,175,122,.12)">💹</div>
+          <div><div class="sndrop-lbl">Pricing &amp; Demand Response</div><div class="sndrop-sub">Elasticity · Lift analysis</div></div>
+        </a>
+        <a class="sndrop-item" href="https://asthaj12.github.io/npi-launch-planning/">
+          <div class="sndrop-icon" style="background:rgba(232,123,164,.12)">🚀</div>
+          <div><div class="sndrop-lbl">NPI Launch Planning</div><div class="sndrop-sub">New item ramp · Cannibalization</div></div>
+        </a>
+        <div class="sndrop-div"></div>
+        <a class="sndrop-item" href="https://asthaj12.github.io/fom-backtesting/" style="background:rgba(99,102,241,.05);">
+          <div class="sndrop-icon" style="background:rgba(99,102,241,.18)">🎯</div>
+          <div><div class="sndrop-lbl">FOM 3.0 Backtesting</div><div class="sndrop-sub">Intervention audit · 309 bps wMAPE gain</div></div>
+        </a>
+      </div>
+    </div>
+    <a class="snav-link" href="https://asthaj12.github.io#projects">Projects</a>
+    <a class="snav-link" href="https://asthaj12.github.io#skills">Skills</a>
+  </div>
+  <div class="snav-right">
+    <a class="snav-badge" href="https://linkedin.com/in/asthajain12" target="_blank">LinkedIn ↗</a>
+    <a class="snav-badge" href="https://github.com/asthaj12" target="_blank">GitHub ↗</a>
+  </div>
+</nav>
+
+<!-- ── Confidentiality banner ────────────────────────────── -->
+<div class="conf-banner">
+  <strong>Independent portfolio case study.</strong> All data, store identifiers, item identifiers, operating assumptions and results shown here are synthetic or materially transformed. This project does not reproduce any employer's data, systems, models or confidential business processes.
+</div>
+
+<!-- ── Demo banner ───────────────────────────────────────── -->
+<div class="demo-banner">
+  <span>⚠ DEMO DATA — Illustrative numbers only. Structure and methodology are real; all figures are synthetic.</span>
+  <span class="db-right">FOM 3.0 · Demand Correction Targeting · $3.1B portfolio · 2,400 pilot stores</span>
+</div>
+
+<!-- ── Tab nav ───────────────────────────────────────────── -->
+<nav class="tab-nav" id="tabNav">
+  <button class="tab-btn active" data-tab="overview">Overview</button>
+  <button class="tab-btn" data-tab="audit">Intervention Audit</button>
+  <button class="tab-btn" data-tab="wmape">wMAPE Improvement</button>
+  <button class="tab-btn" data-tab="targeting">Targeting Framework</button>
+  <button class="tab-btn" data-tab="methodology">Backtest Methodology</button>
+</nav>
+
+<!-- ══════════════════════════════════════════════════════════
+     TAB 1: OVERVIEW
+═══════════════════════════════════════════════════════════ -->
+<main>
+<div id="tab-overview" class="tab-panel active">
+
+  <div class="decision-summary">
+    <div class="ds-grid">
+      <div>
+        <div class="ds-label">Problem</div>
+        <div class="ds-val">42% of $3.1B FOM 2.0 interventions were structurally unwinnable — stores where on-hand inventory already exceeded demand signal. Physics prevented any impact on wMAPE.</div>
+      </div>
+      <div>
+        <div class="ds-label">Solution</div>
+        <div class="ds-val">Redesigned targeting to fire only where on-hand &lt; demand signal, Day-0 or Day-1 timing, and no declining demand window. Validated via store × CID × day backtesting.</div>
+      </div>
+      <div>
+        <div class="ds-label">Result</div>
+        <div class="ds-val">309 bps wMAPE improvement on a $3.1B portfolio — repositioning ~$95M in demand. Intervention win rate lifted from 49% to 71%. No DS rebuild required.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- KPIs -->
+  <div class="kpi-row">
+    <div class="kpi-card accent-blue">
+      <div class="kpi-label">wMAPE Improvement</div>
+      <div class="kpi-value">309 bps</div>
+      <div class="kpi-delta up">↑ 18.2% → 14.9%</div>
+    </div>
+    <div class="kpi-card accent-good">
+      <div class="kpi-label">Demand Repositioned</div>
+      <div class="kpi-value">~$95M</div>
+      <div class="kpi-delta neutral">Within pilot population</div>
+    </div>
+    <div class="kpi-card accent-orange">
+      <div class="kpi-label">Portfolio Scope</div>
+      <div class="kpi-value">$3.1B</div>
+      <div class="kpi-delta neutral">31% of Walmart US units</div>
+    </div>
+    <div class="kpi-card accent-crit">
+      <div class="kpi-label">Misallocated (FOM 2.0)</div>
+      <div class="kpi-value">42%</div>
+      <div class="kpi-delta down">Structurally unwinnable</div>
+    </div>
+    <div class="kpi-card accent-blue">
+      <div class="kpi-label">Pilot Stores</div>
+      <div class="kpi-value">2,400</div>
+      <div class="kpi-delta neutral">High benefit-cycle focus</div>
+    </div>
+  </div>
+
+  <!-- Charts row -->
+  <div class="chart-grid cols-2">
+    <div class="chart-card">
+      <div class="card-title">wMAPE Trend — FOM 2.0 vs FOM 3.0 Pilot (Weeks 1–12)</div>
+      <div class="card-sub">FOM 3.0 pilot progressively diverges from the flat FOM 2.0 baseline</div>
+      <canvas id="ch-wmape-trend"></canvas>
+    </div>
+    <div class="chart-card">
+      <div class="card-title">What Changed? — Before vs After Comparison</div>
+      <div class="card-sub">Win rate lifted 22 pts; misallocation cut from 42% to 12%</div>
+      <canvas id="ch-before-after"></canvas>
+    </div>
+  </div>
+
+</div><!-- /tab-overview -->
+
+<!-- ══════════════════════════════════════════════════════════
+     TAB 2: INTERVENTION AUDIT
+═══════════════════════════════════════════════════════════ -->
+<div id="tab-audit" class="tab-panel">
+
+  <div class="kpi-row">
+    <div class="kpi-card accent-blue">
+      <div class="kpi-label">Total Interventions Audited</div>
+      <div class="kpi-value">186K</div>
+      <div class="kpi-delta neutral">Across 12-week pilot window</div>
+    </div>
+    <div class="kpi-card accent-crit">
+      <div class="kpi-label">Structurally Unwinnable</div>
+      <div class="kpi-value">42%</div>
+      <div class="kpi-delta down">78,120 interventions</div>
+    </div>
+    <div class="kpi-card accent-good">
+      <div class="kpi-label">Won</div>
+      <div class="kpi-value">49%</div>
+      <div class="kpi-delta up">91,140 interventions</div>
+    </div>
+    <div class="kpi-card accent-warn">
+      <div class="kpi-label">Lost-but-Winnable</div>
+      <div class="kpi-value">9%</div>
+      <div class="kpi-delta neutral">16,740 interventions</div>
+    </div>
+  </div>
+
+  <div class="chart-grid cols-2">
+    <div class="chart-card">
+      <div class="card-title">Intervention Outcome Distribution</div>
+      <div class="card-sub">Nearly half of all interventions were structurally blocked from helping</div>
+      <canvas id="ch-donut-outcome"></canvas>
+    </div>
+    <div class="chart-card">
+      <div class="card-title">Why Were Interventions Unwinnable?</div>
+      <div class="card-sub">Root-cause breakdown of the 42% structural failure rate</div>
+      <canvas id="ch-why-unwinnable"></canvas>
+    </div>
+  </div>
+
+  <div class="chart-grid" style="margin-bottom:20px;">
+    <div class="chart-card full">
+      <div class="card-title">Unwinnable vs Winnable Interventions by Week</div>
+      <div class="card-sub">The ~42% unwinnable rate is structural — it holds steady across all 12 weeks, not a timing artifact</div>
+      <canvas id="ch-stacked-weekly"></canvas>
+    </div>
+  </div>
+
+  <!-- Sample audit table -->
+  <div class="chart-card">
+    <div class="card-title">Sample Intervention Audit Rows</div>
+    <div class="card-sub">Store × CID × Day — illustrative examples from the backtesting audit</div>
+    <div class="tbl-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Store ID</th>
+            <th>CID</th>
+            <th>Intervention Type</th>
+            <th>On-Hand at Time</th>
+            <th>Demand Signal</th>
+            <th>Outcome</th>
+            <th>Verdict</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td>STR-0041</td><td>CID-88312</td><td>Demand Uplift +12%</td><td>14.2 days</td><td>8.1 days</td><td>No lift observed</td><td><span class="badge crit">Unwinnable</span></td></tr>
+          <tr><td>STR-1182</td><td>CID-20047</td><td>Demand Uplift +8%</td><td>3.1 days</td><td>6.8 days</td><td>wMAPE −2.1%</td><td><span class="badge good">Won</span></td></tr>
+          <tr><td>STR-0799</td><td>CID-55901</td><td>Demand Uplift +15%</td><td>11.6 days</td><td>9.3 days</td><td>No lift observed</td><td><span class="badge crit">Unwinnable</span></td></tr>
+          <tr><td>STR-2204</td><td>CID-33780</td><td>Demand Uplift +10%</td><td>2.8 days</td><td>7.2 days</td><td>wMAPE −3.4%</td><td><span class="badge good">Won</span></td></tr>
+          <tr><td>STR-0523</td><td>CID-71144</td><td>Demand Uplift +6%</td><td>4.9 days</td><td>5.1 days</td><td>wMAPE +0.4%</td><td><span class="badge warn">Lost-Winnable</span></td></tr>
+          <tr><td>STR-1867</td><td>CID-44209</td><td>Demand Uplift +18%</td><td>16.0 days</td><td>7.5 days</td><td>No lift observed</td><td><span class="badge crit">Unwinnable</span></td></tr>
+          <tr><td>STR-0308</td><td>CID-92601</td><td>Demand Uplift +9%</td><td>1.7 days</td><td>5.6 days</td><td>wMAPE −4.2%</td><td><span class="badge good">Won</span></td></tr>
+          <tr><td>STR-1599</td><td>CID-18340</td><td>Demand Uplift +11%</td><td>9.3 days</td><td>8.9 days</td><td>No lift observed</td><td><span class="badge crit">Unwinnable</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+</div><!-- /tab-audit -->
+
+<!-- ══════════════════════════════════════════════════════════
+     TAB 3: wMAPE IMPROVEMENT
+═══════════════════════════════════════════════════════════ -->
+<div id="tab-wmape" class="tab-panel">
+
+  <div class="kpi-row">
+    <div class="kpi-card accent-crit">
+      <div class="kpi-label">Baseline wMAPE (FOM 2.0)</div>
+      <div class="kpi-value">18.2%</div>
+      <div class="kpi-delta neutral">Pre-pilot average</div>
+    </div>
+    <div class="kpi-card accent-good">
+      <div class="kpi-label">Post-Pilot wMAPE</div>
+      <div class="kpi-value">14.9%</div>
+      <div class="kpi-delta up">↓ 309 bps improvement</div>
+    </div>
+    <div class="kpi-card accent-blue">
+      <div class="kpi-label">Improvement</div>
+      <div class="kpi-value">309 bps</div>
+      <div class="kpi-delta up">Full pilot population</div>
+    </div>
+    <div class="kpi-card accent-good">
+      <div class="kpi-label">High-Benefit-Cycle Stores</div>
+      <div class="kpi-value">+520 bps</div>
+      <div class="kpi-delta up">Strongest signal group</div>
+    </div>
+    <div class="kpi-card accent-blue">
+      <div class="kpi-label">Standard Stores</div>
+      <div class="kpi-value">+240 bps</div>
+      <div class="kpi-delta up">Solid baseline improvement</div>
+    </div>
+  </div>
+
+  <div class="chart-grid">
+    <div class="chart-card full">
+      <div class="card-title">wMAPE by Week — Three Cohort Comparison</div>
+      <div class="card-sub">High-benefit-cycle (SNAP issuance) stores show the strongest improvement; FOM 2.0 control remains flat</div>
+      <canvas id="ch-wmape-cohort"></canvas>
+    </div>
+  </div>
+
+  <div class="chart-grid cols-2">
+    <div class="chart-card">
+      <div class="card-title">wMAPE Improvement by Store Tier</div>
+      <div class="card-sub">SNAP-issuance stores benefit most from Day-0 targeting precision</div>
+      <canvas id="ch-tier-improvement"></canvas>
+    </div>
+    <div class="chart-card">
+      <div class="card-title">Day-of-Intervention Value Curve</div>
+      <div class="card-sub">Day-0 and Day-1 are highly positive; Day-3+ actively harm wMAPE by over-correcting</div>
+      <canvas id="ch-day-value"></canvas>
+    </div>
+  </div>
+
+</div><!-- /tab-wmape -->
+
+<!-- ══════════════════════════════════════════════════════════
+     TAB 4: TARGETING FRAMEWORK
+═══════════════════════════════════════════════════════════ -->
+<div id="tab-targeting" class="tab-panel">
+
+  <div class="kpi-row">
+    <div class="kpi-card accent-blue">
+      <div class="kpi-label">New Targeting Criteria</div>
+      <div class="kpi-value">3</div>
+      <div class="kpi-delta neutral">On-hand · Day-of · Demand trend</div>
+    </div>
+    <div class="kpi-card accent-good">
+      <div class="kpi-label">Day-0 Eligible Stores</div>
+      <div class="kpi-value">~62%</div>
+      <div class="kpi-delta up">Of original 2.0 pool</div>
+    </div>
+    <div class="kpi-card accent-crit">
+      <div class="kpi-label">Excluded (Previously Targeted)</div>
+      <div class="kpi-value">38%</div>
+      <div class="kpi-delta down">Removed from intervention pool</div>
+    </div>
+    <div class="kpi-card accent-orange">
+      <div class="kpi-label">Net Reduction in Interventions</div>
+      <div class="kpi-value">−38%</div>
+      <div class="kpi-delta up">Higher precision, fewer fires</div>
+    </div>
+  </div>
+
+  <div class="chart-grid cols-2">
+    <div class="chart-card">
+      <div class="card-title">Intervention Pool Waterfall — FOM 2.0 → FOM 3.0</div>
+      <div class="card-sub">Each filter removes a structural failure mode; final pool is 38% smaller but far more accurate</div>
+      <div class="funnel-wrap" id="funnel-wrap">
+        <div class="funnel-step">
+          <div class="funnel-label">FOM 2.0 Original Pool</div>
+          <div class="funnel-bar-track">
+            <div class="funnel-bar-fill" style="width:100%;background:var(--sec);">186K</div>
+          </div>
+          <div class="funnel-value">186K</div>
+        </div>
+        <div class="funnel-step">
+          <div class="funnel-label">Remove "On-Hand Sufficient"</div>
+          <div class="funnel-bar-track">
+            <div class="funnel-bar-fill" style="width:73%;background:var(--orange);">−50K removed</div>
+          </div>
+          <div class="funnel-value">136K</div>
+        </div>
+        <div class="funnel-step">
+          <div class="funnel-label">Remove Day-3+ Interventions</div>
+          <div class="funnel-bar-track">
+            <div class="funnel-bar-fill" style="width:62%;background:var(--yellow);color:var(--ink)">−21K removed</div>
+          </div>
+          <div class="funnel-value">115K</div>
+        </div>
+        <div class="funnel-step">
+          <div class="funnel-label">Remove Declining Demand Window</div>
+          <div class="funnel-bar-track">
+            <div class="funnel-bar-fill" style="width:62%;background:var(--blue);">−1K removed</div>
+          </div>
+          <div class="funnel-value">114K</div>
+        </div>
+        <div class="funnel-step">
+          <div class="funnel-label">FOM 3.0 Final Target Set</div>
+          <div class="funnel-bar-track">
+            <div class="funnel-bar-fill" style="width:62%;background:var(--good);">114K (62% of original)</div>
+          </div>
+          <div class="funnel-value" style="color:var(--good);font-weight:800;">114K</div>
+        </div>
+      </div>
+    </div>
+    <div class="chart-card">
+      <div class="card-title">Day-of-Intervention Value Curve</div>
+      <div class="card-sub">Clear cliff after Day-2 confirms the targeting rule change; Day-3+ crossed to negative territory</div>
+      <canvas id="ch-day-value-2"></canvas>
+    </div>
+  </div>
+
+  <!-- Rules comparison table -->
+  <div class="chart-card" style="margin-top:16px;">
+    <div class="card-title">FOM 2.0 vs FOM 3.0 — Targeting Rules Comparison</div>
+    <div class="card-sub">Every rule change was validated through the backtesting framework before deployment</div>
+    <div class="tbl-wrap" style="margin-top:12px;">
+      <table class="comp-table">
+        <thead>
+          <tr>
+            <th>FOM 2.0 Rule (Legacy)</th>
+            <th>FOM 3.0 Rule (Redesigned)</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Fire for any store with demand signal above system forecast, regardless of on-hand position</td>
+            <td>Fire only when on-hand inventory is below demand signal threshold — ensures physical capacity to respond</td>
+          </tr>
+          <tr>
+            <td>No day-of-cycle restriction — interventions fired on Day 0 through Day 5+</td>
+            <td>Restrict to Day-0 and Day-1 only; Day-2 allowed with reduced size; Day-3+ excluded</td>
+          </tr>
+          <tr>
+            <td>Flat intervention size regardless of demand trend direction</td>
+            <td>Demand trend gate: exclude stores in a confirmed declining demand window</td>
+          </tr>
+          <tr>
+            <td>No store-tier differentiation — SNAP and non-SNAP stores treated equally</td>
+            <td>High-benefit-cycle (SNAP issuance) stores receive priority sequencing and larger eligible window</td>
+          </tr>
+          <tr>
+            <td>Win rate 49% — nearly half of all fires produced no measurable wMAPE benefit</td>
+            <td>Win rate 71% — validated across 12-week backtest before production rollout</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+</div><!-- /tab-targeting -->
+
+<!-- ══════════════════════════════════════════════════════════
+     TAB 5: BACKTEST METHODOLOGY
+═══════════════════════════════════════════════════════════ -->
+<div id="tab-methodology" class="tab-panel">
+
+  <div class="decision-summary">
+    <div class="ds-grid">
+      <div>
+        <div class="ds-label">Astha's Ownership</div>
+        <div class="ds-val">Business logic design, intervention targeting criteria, backtest framing, wMAPE decomposition, and pilot store selection rationale.</div>
+      </div>
+      <div>
+        <div class="ds-label">DS / Engineering Ownership</div>
+        <div class="ds-val">Technical query infrastructure, data pipeline execution, store × CID × day join logic, and production rollout of the new targeting rules.</div>
+      </div>
+      <div>
+        <div class="ds-label">Key Insight</div>
+        <div class="ds-val">No DS model rebuild required. The gain came entirely from changing which stores receive interventions and on which day — a targeting problem, not a modeling problem.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="kpi-row">
+    <div class="kpi-card accent-blue">
+      <div class="kpi-label">Pilot Stores</div>
+      <div class="kpi-value">2,400</div>
+      <div class="kpi-delta neutral">Backtested population</div>
+    </div>
+    <div class="kpi-card accent-blue">
+      <div class="kpi-label">CIDs Covered</div>
+      <div class="kpi-value">18,000+</div>
+      <div class="kpi-delta neutral">Item-level granularity</div>
+    </div>
+    <div class="kpi-card accent-blue">
+      <div class="kpi-label">Days in Backtest</div>
+      <div class="kpi-value">84</div>
+      <div class="kpi-delta neutral">12-week window</div>
+    </div>
+    <div class="kpi-card accent-good">
+      <div class="kpi-label">Total Observations</div>
+      <div class="kpi-value">4M+</div>
+      <div class="kpi-delta up">Store × CID × Day rows</div>
+    </div>
+  </div>
+
+  <div class="chart-grid cols-2">
+    <div class="chart-card">
+      <div class="card-title">Backtest Design — Step-by-Step</div>
+      <div class="card-sub">Six phases from historical data pull to production pilot recommendation</div>
+      <table class="timeline-tbl">
+        <tbody>
+          <tr>
+            <td><div class="step-num">1</div></td>
+            <td>
+              <div class="step-label">Historical Data Pull</div>
+              <div class="step-sub">12 weeks of store × CID × day intervention records, on-hand positions, and wMAPE outcomes extracted from production systems</div>
+            </td>
+          </tr>
+          <tr>
+            <td><div class="step-num">2</div></td>
+            <td>
+              <div class="step-label">Store × CID × Day Segmentation</div>
+              <div class="step-sub">Each intervention labeled with: on-hand at time of fire, day-of-cycle (0–5+), demand trend direction, store SNAP tier</div>
+            </td>
+          </tr>
+          <tr>
+            <td><div class="step-num">3</div></td>
+            <td>
+              <div class="step-label">Apply Legacy (FOM 2.0) Rules</div>
+              <div class="step-sub">Retroactively applied FOM 2.0 targeting logic to identify which interventions would have fired — establishes the 49% win-rate baseline</div>
+            </td>
+          </tr>
+          <tr>
+            <td><div class="step-num">4</div></td>
+            <td>
+              <div class="step-label">Apply New (FOM 3.0) Rules</div>
+              <div class="step-sub">Applied redesigned targeting criteria to the same historical data — identified which interventions would have fired under the new logic</div>
+            </td>
+          </tr>
+          <tr>
+            <td><div class="step-num">5</div></td>
+            <td>
+              <div class="step-label">Compare wMAPE Outcomes</div>
+              <div class="step-sub">Measured wMAPE delta between FOM 2.0 and FOM 3.0 targeting populations across all 4M+ store × CID × day observations</div>
+            </td>
+          </tr>
+          <tr>
+            <td><div class="step-num">6</div></td>
+            <td>
+              <div class="step-label">Pilot Store Recommendation</div>
+              <div class="step-sub">Recommended 2,400-store pilot based on highest expected impact: high benefit-cycle, sufficient historical signal, representative size mix</div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="chart-card">
+      <div class="card-title">Backtest Confidence — Rolling wMAPE Improvement by Pilot Week</div>
+      <div class="card-sub">Signal converges and stabilizes by Week 6 — confirming the 309 bps estimate is robust</div>
+      <canvas id="ch-convergence"></canvas>
+    </div>
+  </div>
+
+  <div class="chart-card" style="margin-top:16px;">
+    <div class="card-title">Pilot Population Coverage</div>
+    <div class="card-sub">Scale of the backtesting exercise across stores, items, and time</div>
+    <canvas id="ch-coverage"></canvas>
+  </div>
+
+  <div class="assumptions-box">
+    <strong>Key Methodology Assumptions &amp; Caveats</strong>
+    <ul>
+      <li>Backtest uses historical intervention outcomes as a counterfactual proxy — not a true randomized experiment. Selection bias from FOM 2.0 targeting is acknowledged.</li>
+      <li>wMAPE is computed at store × CID × day level; aggregate improvement is a weighted average by demand volume.</li>
+      <li>"Unwinnable" classification requires on-hand inventory to exceed demand signal by at least 2 days of supply at time of intervention fire.</li>
+      <li>Day-of-cycle (0, 1, 2, 3+) is measured from the first day of the demand correction window, not calendar day.</li>
+      <li>High-benefit-cycle stores = stores with SNAP issuance on or within 2 days of the intervention window.</li>
+      <li>The ~$95M demand repositioning estimate assumes the 309 bps improvement applies proportionally across the $3.1B portfolio.</li>
+      <li>All store IDs, CIDs, and outcome figures shown in this dashboard are synthetic for portfolio illustration.</li>
+    </ul>
+  </div>
+
+</div><!-- /tab-methodology -->
+
+<!-- ── Footer ─────────────────────────────────────────────── -->
+<div class="page-footer">
+  <span>Built by <strong>Astha Jain</strong> · <a href="https://linkedin.com/in/asthajain12" target="_blank">LinkedIn ↗</a></span>
+  <span style="margin-left:auto;">FOM 3.0 · Demand Correction Targeting Redesign · Portfolio Case Study</span>
+</div>
+
+</main><!-- /main -->
+
+<!-- ══════════════════════════════════════════════════════════
+     SCRIPTS
+═══════════════════════════════════════════════════════════ -->
+<script>
+/* ── Tab switching ───────────────────────────────────────── */
+(function(){
+  const btns = document.querySelectorAll('.tab-btn');
+  const panels = document.querySelectorAll('.tab-panel');
+  btns.forEach(btn => {
+    btn.addEventListener('click', () => {
+      btns.forEach(b => b.classList.remove('active'));
+      panels.forEach(p => p.classList.remove('active'));
+      btn.classList.add('active');
+      const target = document.getElementById('tab-' + btn.dataset.tab);
+      if(target) target.classList.add('active');
+    });
+  });
+})();
+
+/* ── Shared chart defaults ───────────────────────────────── */
+Chart.defaults.font.family = "system-ui, -apple-system, 'Segoe UI', sans-serif";
+Chart.defaults.font.size = 11;
+Chart.defaults.color = '#898781';
+Chart.defaults.plugins.legend.display = false;
+
+const GRID_COLOR = '#e1e0d9';
+const BLUE   = '#6366f1';
+const ORANGE = '#eb6834';
+const AQUA   = '#1baf7a';
+const YELLOW = '#eda100';
+const RED    = '#e34948';
+const GRAY   = '#c3c2b7';
+const GOOD   = '#0ca30c';
+
+function gridOpts(){ return { color: GRID_COLOR, drawBorder: false }; }
+function tickOpts(){ return { color: '#898781' }; }
+
+/* ── TAB 1: wMAPE Trend ──────────────────────────────────── */
+(function(){
+  const weeks = ['Wk 1','Wk 2','Wk 3','Wk 4','Wk 5','Wk 6','Wk 7','Wk 8','Wk 9','Wk 10','Wk 11','Wk 12'];
+  const fom2  = [18.2, 18.3, 18.1, 18.2, 18.3, 18.1, 18.2, 18.0, 18.2, 18.1, 18.2, 18.2];
+  const fom3  = [18.0, 17.6, 17.1, 16.8, 16.4, 16.1, 15.8, 15.6, 15.4, 15.2, 15.0, 14.9];
+
+  new Chart(document.getElementById('ch-wmape-trend'), {
+    type: 'line',
+    data: {
+      labels: weeks,
+      datasets: [
+        {
+          label: 'FOM 2.0 Baseline',
+          data: fom2,
+          borderColor: GRAY,
+          backgroundColor: 'transparent',
+          borderDash: [5,4],
+          pointRadius: 3,
+          pointBackgroundColor: GRAY,
+          tension: 0.3
+        },
+        {
+          label: 'FOM 3.0 Pilot',
+          data: fom3,
+          borderColor: BLUE,
+          backgroundColor: 'rgba(99,102,241,0.08)',
+          fill: true,
+          pointRadius: 3,
+          pointBackgroundColor: BLUE,
+          tension: 0.3
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      interaction: { mode: 'index', intersect: false },
+      plugins: {
+        legend: {
+          display: true,
+          labels: { boxWidth: 20, font: { size: 11 }, color: '#52514e' }
+        },
+        tooltip: { callbacks: { label: ctx => `${ctx.dataset.label}: ${ctx.parsed.y.toFixed(1)}%` } }
+      },
+      scales: {
+        x: { grid: gridOpts(), ticks: tickOpts() },
+        y: {
+          grid: gridOpts(), ticks: { ...tickOpts(), callback: v => v + '%' },
+          min: 13, max: 20,
+          title: { display: true, text: 'wMAPE (%)', color: '#898781', font: { size: 11 } }
+        }
+      }
+    }
+  });
+})();
+
+/* ── TAB 1: Before/After bar ─────────────────────────────── */
+(function(){
+  new Chart(document.getElementById('ch-before-after'), {
+    type: 'bar',
+    data: {
+      labels: ['Win Rate', 'Misallocation Rate'],
+      datasets: [
+        {
+          label: 'FOM 2.0',
+          data: [49, 42],
+          backgroundColor: [GRAY, RED],
+          borderRadius: 4
+        },
+        {
+          label: 'FOM 3.0',
+          data: [71, 12],
+          backgroundColor: [GOOD, AQUA],
+          borderRadius: 4
+        }
+      ]
+    },
+    options: {
+      indexAxis: 'y',
+      responsive: true,
+      plugins: {
+        legend: {
+          display: true,
+          labels: { boxWidth: 16, font: { size: 11 }, color: '#52514e' }
+        },
+        tooltip: { callbacks: { label: ctx => `${ctx.dataset.label}: ${ctx.parsed.x}%` } }
+      },
+      scales: {
+        x: {
+          grid: gridOpts(), ticks: { ...tickOpts(), callback: v => v + '%' },
+          max: 100
+        },
+        y: { grid: { display: false }, ticks: tickOpts() }
+      }
+    }
+  });
+})();
+
+/* ── TAB 2: Donut outcome ────────────────────────────────── */
+(function(){
+  new Chart(document.getElementById('ch-donut-outcome'), {
+    type: 'doughnut',
+    data: {
+      labels: ['Unwinnable (42%)', 'Won (49%)', 'Lost-Winnable (9%)'],
+      datasets: [{
+        data: [42, 49, 9],
+        backgroundColor: [GRAY, GOOD, RED],
+        borderWidth: 2,
+        borderColor: '#fcfcfb'
+      }]
+    },
+    options: {
+      responsive: true,
+      cutout: '65%',
+      plugins: {
+        legend: {
+          display: true,
+          position: 'bottom',
+          labels: { boxWidth: 14, font: { size: 11 }, color: '#52514e', padding: 10 }
+        },
+        tooltip: { callbacks: { label: ctx => `${ctx.label}: ${ctx.parsed}%` } }
+      }
+    }
+  });
+})();
+
+/* ── TAB 2: Why unwinnable bar ───────────────────────────── */
+(function(){
+  new Chart(document.getElementById('ch-why-unwinnable'), {
+    type: 'bar',
+    data: {
+      labels: ['On-Hand Already\nSufficient', 'Demand Already\nDeclining', 'Store Structurally\nOversupplied'],
+      datasets: [{
+        data: [68, 21, 11],
+        backgroundColor: [RED, ORANGE, YELLOW],
+        borderRadius: 4
+      }]
+    },
+    options: {
+      indexAxis: 'y',
+      responsive: true,
+      plugins: {
+        legend: { display: false },
+        tooltip: { callbacks: { label: ctx => `${ctx.parsed.x}% of unwinnable interventions` } }
+      },
+      scales: {
+        x: {
+          grid: gridOpts(), ticks: { ...tickOpts(), callback: v => v + '%' },
+          max: 80
+        },
+        y: { grid: { display: false }, ticks: { ...tickOpts(), font: { size: 10 } } }
+      }
+    }
+  });
+})();
+
+/* ── TAB 2: Stacked weekly ───────────────────────────────── */
+(function(){
+  const weeks = ['Wk 1','Wk 2','Wk 3','Wk 4','Wk 5','Wk 6','Wk 7','Wk 8','Wk 9','Wk 10','Wk 11','Wk 12'];
+  const unwin = [41, 43, 42, 41, 42, 43, 42, 41, 42, 43, 42, 41];
+  const winbl = [8, 9, 9, 10, 9, 8, 9, 9, 10, 8, 9, 9];
+  const won   = [51, 48, 49, 49, 49, 49, 49, 50, 48, 49, 49, 50];
+
+  new Chart(document.getElementById('ch-stacked-weekly'), {
+    type: 'bar',
+    data: {
+      labels: weeks,
+      datasets: [
+        { label: 'Won', data: won, backgroundColor: GOOD, stack: 's' },
+        { label: 'Lost-Winnable', data: winbl, backgroundColor: YELLOW, stack: 's' },
+        { label: 'Unwinnable', data: unwin, backgroundColor: GRAY, stack: 's' }
+      ]
+    },
+    options: {
+      responsive: true,
+      plugins: {
+        legend: {
+          display: true,
+          labels: { boxWidth: 14, font: { size: 11 }, color: '#52514e' }
+        },
+        tooltip: { callbacks: { label: ctx => `${ctx.dataset.label}: ${ctx.parsed.y}%` } }
+      },
+      scales: {
+        x: { grid: { display: false }, ticks: tickOpts(), stacked: true },
+        y: {
+          grid: gridOpts(), ticks: { ...tickOpts(), callback: v => v + '%' },
+          stacked: true, max: 100
+        }
+      }
+    }
+  });
+})();
+
+/* ── TAB 3: wMAPE cohort line ────────────────────────────── */
+(function(){
+  const weeks = ['Wk 1','Wk 2','Wk 3','Wk 4','Wk 5','Wk 6','Wk 7','Wk 8','Wk 9','Wk 10','Wk 11','Wk 12'];
+  const ctrl  = [18.2, 18.3, 18.1, 18.2, 18.3, 18.1, 18.2, 18.0, 18.2, 18.1, 18.2, 18.2];
+  const std   = [18.0, 17.7, 17.4, 17.1, 16.8, 16.6, 16.4, 16.2, 16.0, 15.8, 15.7, 15.8];
+  const hbc   = [17.8, 17.2, 16.6, 16.0, 15.5, 15.0, 14.5, 14.2, 13.8, 13.5, 13.3, 13.0];
+
+  new Chart(document.getElementById('ch-wmape-cohort'), {
+    type: 'line',
+    data: {
+      labels: weeks,
+      datasets: [
+        {
+          label: 'FOM 2.0 Control',
+          data: ctrl,
+          borderColor: GRAY,
+          backgroundColor: 'transparent',
+          borderDash: [5,4],
+          pointRadius: 3,
+          pointBackgroundColor: GRAY,
+          tension: 0.3
+        },
+        {
+          label: 'FOM 3.0 — Standard Stores (+240 bps)',
+          data: std,
+          borderColor: BLUE,
+          backgroundColor: 'rgba(99,102,241,0.07)',
+          fill: true,
+          pointRadius: 3,
+          pointBackgroundColor: BLUE,
+          tension: 0.3
+        },
+        {
+          label: 'FOM 3.0 — High Benefit-Cycle (+520 bps)',
+          data: hbc,
+          borderColor: GOOD,
+          backgroundColor: 'rgba(12,163,12,0.07)',
+          fill: true,
+          pointRadius: 3,
+          pointBackgroundColor: GOOD,
+          tension: 0.3
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      interaction: { mode: 'index', intersect: false },
+      plugins: {
+        legend: {
+          display: true,
+          labels: { boxWidth: 20, font: { size: 11 }, color: '#52514e' }
+        },
+        tooltip: { callbacks: { label: ctx => `${ctx.dataset.label}: ${ctx.parsed.y.toFixed(1)}%` } }
+      },
+      scales: {
+        x: { grid: gridOpts(), ticks: tickOpts() },
+        y: {
+          grid: gridOpts(), ticks: { ...tickOpts(), callback: v => v + '%' },
+          min: 12, max: 20,
+          title: { display: true, text: 'wMAPE (%)', color: '#898781', font: { size: 11 } }
+        }
+      }
+    }
+  });
+})();
+
+/* ── TAB 3: Tier improvement bar ─────────────────────────── */
+(function(){
+  new Chart(document.getElementById('ch-tier-improvement'), {
+    type: 'bar',
+    data: {
+      labels: ['High Benefit-Cycle\n(SNAP)', 'Mid-Tier', 'Standard', 'No-SNAP'],
+      datasets: [{
+        data: [520, 380, 240, 140],
+        backgroundColor: [GOOD, AQUA, BLUE, GRAY],
+        borderRadius: 4
+      }]
+    },
+    options: {
+      responsive: true,
+      plugins: {
+        legend: { display: false },
+        tooltip: { callbacks: { label: ctx => `+${ctx.parsed.y} bps improvement` } }
+      },
+      scales: {
+        x: { grid: { display: false }, ticks: { ...tickOpts(), font: { size: 10 } } },
+        y: {
+          grid: gridOpts(),
+          ticks: { ...tickOpts(), callback: v => v + ' bps' },
+          title: { display: true, text: 'wMAPE Improvement (bps)', color: '#898781', font: { size: 10 } }
+        }
+      }
+    }
+  });
+})();
+
+/* ── TAB 3 + TAB 4: Day-of-intervention value ────────────── */
+function buildDayValueChart(canvasId){
+  new Chart(document.getElementById(canvasId), {
+    type: 'bar',
+    data: {
+      labels: ['Day 0', 'Day 1', 'Day 2', 'Day 3', 'Day 4+'],
+      datasets: [{
+        data: [3.2, 2.1, 0.8, -0.4, -1.8],
+        backgroundColor: [GOOD, GOOD, AQUA, RED, RED],
+        borderRadius: 4
+      }]
+    },
+    options: {
+      responsive: true,
+      plugins: {
+        legend: { display: false },
+        tooltip: { callbacks: {
+          label: ctx => {
+            const v = ctx.parsed.y;
+            return v > 0 ? `+${v}% wMAPE gain` : `${v}% wMAPE loss`;
+          }
+        }}
+      },
+      scales: {
+        x: { grid: { display: false }, ticks: tickOpts() },
+        y: {
+          grid: gridOpts(),
+          ticks: { ...tickOpts(), callback: v => v + '%' },
+          title: { display: true, text: 'wMAPE Impact (%)', color: '#898781', font: { size: 10 } }
+        }
+      }
+    }
+  });
+}
+buildDayValueChart('ch-day-value');
+buildDayValueChart('ch-day-value-2');
+
+/* ── TAB 5: Convergence line ─────────────────────────────── */
+(function(){
+  const weeks = ['Wk 1','Wk 2','Wk 3','Wk 4','Wk 5','Wk 6','Wk 7','Wk 8','Wk 9','Wk 10','Wk 11','Wk 12'];
+  const rolling = [180, 210, 240, 265, 280, 300, 304, 307, 308, 309, 309, 309];
+
+  new Chart(document.getElementById('ch-convergence'), {
+    type: 'line',
+    data: {
+      labels: weeks,
+      datasets: [{
+        label: 'Rolling wMAPE Improvement (bps)',
+        data: rolling,
+        borderColor: BLUE,
+        backgroundColor: 'rgba(99,102,241,0.08)',
+        fill: true,
+        pointRadius: 4,
+        pointBackgroundColor: BLUE,
+        tension: 0.4
+      }]
+    },
+    options: {
+      responsive: true,
+      plugins: {
+        legend: { display: false },
+        tooltip: { callbacks: { label: ctx => `${ctx.parsed.y} bps (rolling average)` } }
+      },
+      scales: {
+        x: { grid: gridOpts(), ticks: tickOpts() },
+        y: {
+          grid: gridOpts(),
+          ticks: { ...tickOpts(), callback: v => v + ' bps' },
+          min: 100, max: 360,
+          title: { display: true, text: 'Cumulative wMAPE Improvement (bps)', color: '#898781', font: { size: 10 } }
+        }
+      }
+    }
+  });
+})();
+
+/* ── TAB 5: Coverage bar ─────────────────────────────────── */
+(function(){
+  new Chart(document.getElementById('ch-coverage'), {
+    type: 'bar',
+    data: {
+      labels: ['Pilot Stores', 'CIDs (thousands)', 'Backtest Days', 'Observations (M)'],
+      datasets: [{
+        label: 'Scale',
+        data: [2400, 18, 84, 4],
+        backgroundColor: [BLUE, AQUA, ORANGE, GOOD],
+        borderRadius: 4
+      }]
+    },
+    options: {
+      responsive: true,
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          callbacks: {
+            label: ctx => {
+              const labels = ['2,400 stores', '18,000+ CIDs', '84 days (12 weeks)', '4M+ observations'];
+              return labels[ctx.dataIndex];
+            }
+          }
+        }
+      },
+      scales: {
+        x: { grid: { display: false }, ticks: tickOpts() },
+        y: {
+          grid: gridOpts(), ticks: tickOpts(),
+          title: { display: true, text: 'Count (raw units per axis label)', color: '#898781', font: { size: 10 } }
+        }
+      }
+    }
+  });
+})();
+</script>
+</body>
+</html>
