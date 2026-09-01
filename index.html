@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
-<title>Intraweek Demand Signal Correction — Demo</title>
+<title>Demand Signal Backtesting & Targeting — Demo</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
 <style>
 /* ── Design tokens ────────────────────────────────────────── */
@@ -181,7 +181,7 @@ tr:hover td{background:#f4f3f0;}
         <div class="sndrop-div"></div>
         <a class="sndrop-item" href="https://asthaj12.github.io/fom-backtesting/" style="background:rgba(99,102,241,.05);">
           <div class="sndrop-icon" style="background:rgba(99,102,241,.18)">🎯</div>
-          <div><div class="sndrop-lbl">Intraweek Demand Correction</div><div class="sndrop-sub">Intervention audit · 309 bps wMAPE gain</div></div>
+          <div><div class="sndrop-lbl">Demand Signal Backtesting & Targeting</div><div class="sndrop-sub">Intervention audit · 309 bps wMAPE gain</div></div>
         </a>
       </div>
     </div>
@@ -202,7 +202,7 @@ tr:hover td{background:#f4f3f0;}
 <!-- ── Demo banner ───────────────────────────────────────── -->
 <div class="demo-banner">
   <span>⚠ DEMO DATA — Illustrative numbers only. Structure and methodology are real; all figures are synthetic.</span>
-  <span class="db-right">Intraweek Demand Signal Correction · $3.1B portfolio · 2,400 pilot stores</span>
+  <span class="db-right">Demand Signal Backtesting & Targeting · $3.1B portfolio · 2,400 pilot stores</span>
 </div>
 
 <!-- ── Tab nav ───────────────────────────────────────────── -->
@@ -273,8 +273,8 @@ tr:hover td{background:#f4f3f0;}
   <!-- Charts row -->
   <div class="chart-grid cols-2">
     <div class="chart-card">
-      <div class="card-title">wMAPE Trend — Demand Correction System v1 vs Intraweek Demand Signal Correction Pilot (Weeks 1–12)</div>
-      <div class="card-sub">Intraweek Demand Signal Correction pilot progressively diverges from the flat legacy baseline</div>
+      <div class="card-title">wMAPE Trend — Demand Correction System v1 vs Demand Signal Backtesting & Targeting Pilot (Weeks 1–12)</div>
+      <div class="card-sub">Demand Signal Backtesting & Targeting pilot progressively diverges from the flat legacy baseline</div>
       <canvas id="ch-wmape-trend"></canvas>
     </div>
     <div class="chart-card">
@@ -454,7 +454,7 @@ tr:hover td{background:#f4f3f0;}
 
   <div class="chart-grid cols-2">
     <div class="chart-card">
-      <div class="card-title">Intervention Pool Waterfall — Demand Correction System v1 → Intraweek Demand Signal Correction</div>
+      <div class="card-title">Intervention Pool Waterfall — Demand Correction System v1 → Demand Signal Backtesting & Targeting</div>
       <div class="card-sub">Each filter removes a structural failure mode; final pool is 38% smaller but far more accurate</div>
       <div class="funnel-wrap" id="funnel-wrap">
         <div class="funnel-step">
@@ -503,14 +503,14 @@ tr:hover td{background:#f4f3f0;}
 
   <!-- Rules comparison table -->
   <div class="chart-card" style="margin-top:16px;">
-    <div class="card-title">Demand Correction System v1 vs Intraweek Demand Signal Correction — Targeting Rules Comparison</div>
+    <div class="card-title">Demand Correction System v1 vs Demand Signal Backtesting & Targeting — Targeting Rules Comparison</div>
     <div class="card-sub">Every rule change was validated through the backtesting framework before deployment</div>
     <div class="tbl-wrap" style="margin-top:12px;">
       <table class="comp-table">
         <thead>
           <tr>
             <th>Demand Correction System v1 Rule (Legacy)</th>
-            <th>Intraweek Demand Signal Correction Rule (Redesigned)</th>
+            <th>Demand Signal Backtesting & Targeting Rule (Redesigned)</th>
           </tr>
         </thead>
         <tbody>
@@ -625,7 +625,7 @@ tr:hover td{background:#f4f3f0;}
           <tr>
             <td><div class="step-num">4</div></td>
             <td>
-              <div class="step-label">Apply New (Intraweek Demand Signal Correction) Rules</div>
+              <div class="step-label">Apply New (Demand Signal Backtesting & Targeting) Rules</div>
               <div class="step-sub">Applied redesigned targeting criteria to the same historical data — identified which interventions would have fired under the new logic</div>
             </td>
           </tr>
@@ -633,7 +633,7 @@ tr:hover td{background:#f4f3f0;}
             <td><div class="step-num">5</div></td>
             <td>
               <div class="step-label">Compare wMAPE Outcomes</div>
-              <div class="step-sub">Measured wMAPE delta between Demand Correction System v1 and Intraweek Demand Signal Correction targeting populations across all 4M+ store × SKU × day observations</div>
+              <div class="step-sub">Measured wMAPE delta between Demand Correction System v1 and Demand Signal Backtesting & Targeting populations across all 4M+ store × SKU × day observations</div>
             </td>
           </tr>
           <tr>
@@ -677,7 +677,7 @@ tr:hover td{background:#f4f3f0;}
 <!-- ── Footer ─────────────────────────────────────────────── -->
 <div class="page-footer">
   <span>Built by <strong>Astha Jain</strong> · <a href="https://linkedin.com/in/asthajain12" target="_blank">LinkedIn ↗</a></span>
-  <span style="margin-left:auto;">Intraweek Demand Signal Correction · Backtesting &amp; Targeting Redesign · Portfolio Case Study</span>
+  <span style="margin-left:auto;">Demand Signal Backtesting &amp; Targeting · Portfolio Case Study</span>
 </div>
 
 </main><!-- /main -->
