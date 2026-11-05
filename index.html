@@ -288,7 +288,7 @@ document.addEventListener('keydown',function(e){if(e.key==='Escape'&&dd.open){dd
       </div>
       <div>
         <div class="ds-label">Primary Risk</div>
-        <div class="ds-val">The benefit-cycle signal is strongest in high-SNAP-concentration stores. Corrections applied beyond Day-0 in the cycle introduce noise rather than signal — the system must respect the temporal decay of the issuance effect.</div>
+        <div class="ds-val">The benefit-cycle signal is strongest in high-benefit-concentration stores. Corrections applied beyond Day-0 in the cycle introduce noise rather than signal — the system must respect the temporal decay of the issuance effect.</div>
       </div>
     </div>
   </div>
@@ -308,7 +308,7 @@ document.addEventListener('keydown',function(e){if(e.key==='Escape'&&dd.open){dd
     <div class="kpi-card accent-orange">
       <div class="kpi-label">Portfolio Scope</div>
       <div class="kpi-value">$3.1B</div>
-      <div class="kpi-delta neutral">31% of Walmart US units</div>
+      <div class="kpi-delta neutral">31% of a national retailer's units</div>
     </div>
     <div class="kpi-card accent-crit">
       <div class="kpi-label">Misallocated (legacy system)</div>
@@ -456,7 +456,7 @@ document.addEventListener('keydown',function(e){if(e.key==='Escape'&&dd.open){dd
   <div class="chart-grid">
     <div class="chart-card full">
       <div class="card-title">wMAPE by Week — Three Cohort Comparison</div>
-      <div class="card-sub">High-benefit-cycle (SNAP issuance) stores show the strongest improvement; legacy demand correction control remains flat</div>
+      <div class="card-sub">High-benefit-cycle (benefit issuance) stores show the strongest improvement; legacy demand correction control remains flat</div>
       <canvas id="ch-wmape-cohort"></canvas>
     </div>
   </div>
@@ -464,7 +464,7 @@ document.addEventListener('keydown',function(e){if(e.key==='Escape'&&dd.open){dd
   <div class="chart-grid cols-2">
     <div class="chart-card">
       <div class="card-title">wMAPE Improvement by Store Tier</div>
-      <div class="card-sub">SNAP-issuance stores benefit most from Day-0 targeting precision</div>
+      <div class="card-sub">Benefit-issuance stores benefit most from Day-0 targeting precision</div>
       <canvas id="ch-tier-improvement"></canvas>
     </div>
     <div class="chart-card">
@@ -579,8 +579,8 @@ document.addEventListener('keydown',function(e){if(e.key==='Escape'&&dd.open){dd
             <td>Demand trend gate: exclude stores in a confirmed declining demand window</td>
           </tr>
           <tr>
-            <td>No store-tier differentiation — SNAP and non-SNAP stores treated equally</td>
-            <td>High-benefit-cycle (SNAP issuance) stores receive priority sequencing and larger eligible window</td>
+            <td>No store-tier differentiation — benefit and non-benefit stores treated equally</td>
+            <td>High-benefit-cycle (benefit issuance) stores receive priority sequencing and larger eligible window</td>
           </tr>
           <tr>
             <td>Win rate 49% — nearly half of all fires produced no measurable wMAPE benefit</td>
@@ -664,7 +664,7 @@ document.addEventListener('keydown',function(e){if(e.key==='Escape'&&dd.open){dd
             <td><div class="step-num">2</div></td>
             <td>
               <div class="step-label">Store × SKU × Day Segmentation</div>
-              <div class="step-sub">Each intervention labeled with: on-hand at time of fire, day-of-cycle (0–5+), demand trend direction, store SNAP tier</div>
+              <div class="step-sub">Each intervention labeled with: on-hand at time of fire, day-of-cycle (0–5+), demand trend direction, store benefit tier</div>
             </td>
           </tr>
           <tr>
@@ -718,7 +718,7 @@ document.addEventListener('keydown',function(e){if(e.key==='Escape'&&dd.open){dd
       <li>wMAPE is computed at store × SKU × day level; aggregate improvement is a weighted average by demand volume.</li>
       <li>"Unwinnable" classification requires on-hand inventory to exceed demand signal by at least 2 days of supply at time of intervention fire.</li>
       <li>Day-of-cycle (0, 1, 2, 3+) is measured from the first day of the demand correction window, not calendar day.</li>
-      <li>High-benefit-cycle stores = stores with SNAP issuance on or within 2 days of the intervention window.</li>
+      <li>High-benefit-cycle stores = stores with benefit issuance on or within 2 days of the intervention window.</li>
       <li>The ~$95M demand repositioning estimate assumes the 309 bps improvement applies proportionally across the $3.1B portfolio.</li>
       <li>All store IDs, SKUs, and outcome figures shown in this dashboard are synthetic for portfolio illustration.</li>
     </ul>
@@ -1034,7 +1034,7 @@ function tickOpts(){ return { color: '#898781' }; }
   new Chart(document.getElementById('ch-tier-improvement'), {
     type: 'bar',
     data: {
-      labels: ['High Benefit-Cycle\n(SNAP)', 'Mid-Tier', 'Standard', 'No-SNAP'],
+      labels: ['High Benefit-Cycle\n(Benefit Issuance)', 'Mid-Tier', 'Standard', 'No-Benefit'],
       datasets: [{
         data: [520, 380, 240, 140],
         backgroundColor: [GOOD, AQUA, BLUE, GRAY],
