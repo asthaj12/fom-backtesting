@@ -3,7 +3,21 @@
 <head>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
-<title>FOM 3.0 — Demand Correction Targeting Redesign · Demo</title>
+<meta name="description" content="Demand signal backtesting and targeting case study: intervention audit, wMAPE improvement, targeting framework, and backtest methodology. Illustrative data."/>
+<link rel="canonical" href="https://asthaj12.github.io/fom-backtesting/"/>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%230f172a'/%3E%3Ctext x='32' y='41' text-anchor='middle' font-family='system-ui,Arial,sans-serif' font-size='26' font-weight='800' fill='%23818cf8'%3EAJ%3C/text%3E%3C/svg%3E"/>
+<meta property="og:type" content="website"/>
+<meta property="og:title" content="Demand Signal Backtesting & Targeting — Demo"/>
+<meta property="og:description" content="Demand signal backtesting and targeting case study: intervention audit, wMAPE improvement, targeting framework, and backtest methodology. Illustrative data."/>
+<meta property="og:url" content="https://asthaj12.github.io/fom-backtesting/"/>
+<meta property="og:image" content="https://asthaj12.github.io/assets/portfolio-share.png"/>
+<meta property="og:image:width" content="1200"/>
+<meta property="og:image:height" content="630"/>
+<meta name="twitter:card" content="summary_large_image"/>
+<meta name="twitter:title" content="Demand Signal Backtesting & Targeting — Demo"/>
+<meta name="twitter:description" content="Demand signal backtesting and targeting case study: intervention audit, wMAPE improvement, targeting framework, and backtest methodology. Illustrative data."/>
+<meta name="twitter:image" content="https://asthaj12.github.io/assets/portfolio-share.png"/>
+<title>Demand Signal Backtesting & Targeting — Demo</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
 <style>
 /* ── Design tokens ────────────────────────────────────────── */
@@ -20,28 +34,6 @@
 body{font-family:system-ui,-apple-system,"Segoe UI",sans-serif;font-size:13px;background:var(--s0);color:var(--ink);min-height:100vh;}
 
 /* ── Sticky nav ───────────────────────────────────────────── */
-.snav{position:sticky;top:0;z-index:200;background:rgba(255,255,255,.96);backdrop-filter:blur(12px);border-bottom:1px solid #e2e8f0;padding:0 20px;display:flex;align-items:center;gap:6px;height:48px;}
-.snav-brand{font-size:13px;font-weight:800;color:#0f172a;text-decoration:none;margin-right:16px;white-space:nowrap;}
-.snav-brand span{color:#6366f1;}
-.snav-items{display:flex;align-items:center;gap:2px;flex:1;}
-.snav-link{padding:5px 10px;border-radius:5px;font-size:12px;font-weight:500;color:#475569;text-decoration:none;white-space:nowrap;transition:background .12s,color .12s;}
-.snav-link:hover{background:rgba(99,102,241,.07);color:#0f172a;}
-.sndrop{position:relative;}
-.sndrop-toggle{display:flex;align-items:center;gap:4px;padding:5px 10px;border-radius:5px;font-size:12px;font-weight:500;color:#475569;cursor:pointer;user-select:none;white-space:nowrap;transition:background .12s,color .12s;}
-.sndrop-toggle:hover{background:rgba(99,102,241,.07);color:#0f172a;}
-.sndrop-toggle svg{width:9px;height:9px;transition:transform .18s;}
-.sndrop:hover .sndrop-toggle svg{transform:rotate(180deg);}
-.sndrop-menu{position:absolute;top:calc(100% + 6px);left:0;background:#fff;border:1px solid #e2e8f0;border-radius:8px;padding:5px;min-width:220px;box-shadow:0 12px 40px rgba(0,0,0,.14);opacity:0;visibility:hidden;pointer-events:none;transform:translateY(-4px);transition:opacity .15s,transform .15s,visibility .15s;}
-.sndrop:hover .sndrop-menu{opacity:1;visibility:visible;pointer-events:auto;transform:translateY(0);}
-.sndrop-item{display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:6px;font-size:11px;font-weight:500;color:#475569;text-decoration:none;transition:background .1s,color .1s;}
-.sndrop-item:hover{background:rgba(99,102,241,.09);color:#0f172a;}
-.sndrop-icon{width:24px;height:24px;border-radius:5px;display:flex;align-items:center;justify-content:center;font-size:12px;flex-shrink:0;}
-.sndrop-lbl{font-weight:600;color:#0f172a;font-size:11px;}
-.sndrop-sub{font-size:10px;color:#94a3b8;margin-top:1px;}
-.sndrop-div{height:1px;background:#e2e8f0;margin:4px 2px;}
-.snav-right{margin-left:auto;display:flex;align-items:center;gap:6px;flex-shrink:0;}
-.snav-badge{padding:4px 12px;border-radius:5px;font-size:11px;font-weight:600;border:1px solid #e2e8f0;color:#475569;text-decoration:none;transition:border-color .12s,color .12s,background .12s;}
-.snav-badge:hover{background:#eef2ff;border-color:#6366f1;color:#6366f1;}
 
 /* ── Banners ──────────────────────────────────────────────── */
 .conf-banner{background:#f1f5f9;border-bottom:1px solid #cbd5e1;padding:10px 32px;font-size:11px;color:#475569;text-align:center;}
@@ -151,48 +143,108 @@ tr:hover td{background:#f4f3f0;}
   .kpi-row{grid-template-columns:1fr;}
   .funnel-label{width:120px;}
 }
+:root{--nav-h:48px;}
+.snav{position:sticky;top:0;z-index:200;background:rgba(249,249,247,.96);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border-bottom:1px solid var(--border);padding:6px 20px;display:flex;flex-wrap:wrap;align-items:center;gap:4px 6px;min-height:48px;}
+.snav ul{list-style:none;margin:0;padding:0;}
+.snav-brand{font-size:13px;font-weight:800;color:#0f172a;text-decoration:none;margin-right:16px;white-space:nowrap;}
+.snav-brand span{color:var(--blue);}
+.snav-menu,.snav-items,.snav-right{display:flex;align-items:center;gap:2px;}
+.snav-items{flex:1;min-width:0;}
+.snav-right{margin-left:auto;gap:6px;flex-shrink:0;}
+.snav-link,#snDrop>summary{display:flex;align-items:center;min-height:32px;padding:5px 10px;border-radius:5px;font-size:12px;font-weight:500;color:#475569;text-decoration:none;white-space:nowrap;transition:background .12s,color .12s;}
+.sndrop{position:relative;}
+#snDrop>summary{cursor:pointer;user-select:none;gap:4px;list-style:none;}
+#snDrop>summary::-webkit-details-marker{display:none;}
+.snav-link:hover,#snDrop>summary:hover,#snDrop[open]>summary{background:rgba(99,102,241,.07);color:#0f172a;}
+#snDrop>summary svg{width:9px;height:9px;flex-shrink:0;transition:transform .18s;}
+#snDrop[open]>summary svg{transform:rotate(180deg);}
+.sndrop-menu{position:absolute;top:calc(100% + 6px);left:0;z-index:210;width:300px;max-width:calc(100vw - 24px);max-height:min(70vh,520px);overflow-y:auto;overscroll-behavior:contain;background:#fff;border:1px solid #e2e8f0;border-radius:8px;padding:5px;box-shadow:0 12px 40px rgba(0,0,0,.14);}
+.sndrop-gh{font-size:9px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:#94a3b8;padding:8px 10px 3px;}
+.sndrop-grp+.sndrop-grp{margin-top:4px;border-top:1px solid #e2e8f0;}
+.sndrop-item{display:flex;align-items:center;gap:8px;min-height:40px;padding:6px 10px;border-radius:6px;font-size:11px;font-weight:500;color:#475569;text-decoration:none;transition:background .1s,color .1s;}
+.sndrop-item:hover,.sndrop-item[aria-current]{background:rgba(99,102,241,.09);color:#0f172a;}
+.sndrop-icon{width:24px;height:24px;border-radius:5px;display:flex;align-items:center;justify-content:center;font-size:12px;flex-shrink:0;}
+.sndrop-lbl{font-weight:600;color:#0f172a;font-size:11px;}
+.sndrop-sub{font-size:10px;color:#94a3b8;margin-top:1px;}
+.snav-badge{display:flex;align-items:center;min-height:32px;padding:4px 12px;border-radius:5px;font-size:11px;font-weight:600;border:1px solid #e2e8f0;color:#475569;text-decoration:none;white-space:nowrap;transition:border-color .12s,color .12s,background .12s;}
+.snav-badge:hover{background:#eef2ff;border-color:#6366f1;color:#6366f1;}
+:focus-visible{outline:2px solid var(--blue);outline-offset:2px;}
+.tab-bar,.tab-nav{position:sticky;top:var(--nav-h,48px);z-index:190;}
+main,.tab-pane,.card{min-width:0;}
+@media (max-width:600px){
+:root{--nav-h:96px;}
+.snav{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:2px 8px;padding:6px 12px;}
+.snav-brand{grid-column:1;grid-row:1;justify-self:start;margin:0;display:flex;align-items:center;min-height:40px;}
+.snav-menu{grid-column:2;grid-row:1;justify-self:end;}
+.sndrop{position:static;}
+.sndrop-menu{left:12px;right:12px;width:auto;max-width:none;}
+.snav-items{grid-column:1;grid-row:2;justify-self:start;flex:none;}
+.snav-right{grid-column:2;grid-row:2;justify-self:end;margin-left:0;}
+.snav-link,#snDrop>summary,.snav-badge,.tab-btn{min-height:40px;}
+.tab-bar,.tab-nav{padding-left:12px;padding-right:12px;}
+main{padding:14px;}
+}
 </style>
 </head>
 <body>
 
 <!-- ── Shared nav ─────────────────────────────────────────── -->
-<nav class="snav">
-  <a href="https://asthaj12.github.io" class="snav-brand">AJ<span> · Portfolio</span></a>
-  <div class="snav-items">
-    <div class="sndrop">
-      <div class="sndrop-toggle">Dashboards<svg viewBox="0 0 10 10" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M2 3.5l3 3 3-3"/></svg></div>
-      <div class="sndrop-menu">
-        <a class="sndrop-item" href="https://asthaj12.github.io/forecast-governance/">
-          <div class="sndrop-icon" style="background:rgba(99,102,241,.12)">📊</div>
-          <div><div class="sndrop-lbl">Forecast Governance</div><div class="sndrop-sub">Anomaly triage · Bias correction</div></div>
-        </a>
-        <a class="sndrop-item" href="https://asthaj12.github.io/seasonal-planning/">
-          <div class="sndrop-icon" style="background:rgba(245,158,11,.12)">📅</div>
-          <div><div class="sndrop-lbl">Seasonal Planning</div><div class="sndrop-sub">Demand scenarios · Commitment staging</div></div>
-        </a>
-        <a class="sndrop-item" href="https://asthaj12.github.io/pricing-demand-response/">
-          <div class="sndrop-icon" style="background:rgba(27,175,122,.12)">💹</div>
-          <div><div class="sndrop-lbl">Pricing &amp; Demand Response</div><div class="sndrop-sub">Elasticity · Lift analysis</div></div>
-        </a>
-        <a class="sndrop-item" href="https://asthaj12.github.io/npi-launch-planning/">
-          <div class="sndrop-icon" style="background:rgba(232,123,164,.12)">🚀</div>
-          <div><div class="sndrop-lbl">NPI Launch Planning</div><div class="sndrop-sub">New item ramp · Cannibalization</div></div>
-        </a>
-        <div class="sndrop-div"></div>
-        <a class="sndrop-item" href="https://asthaj12.github.io/fom-backtesting/" style="background:rgba(99,102,241,.05);">
-          <div class="sndrop-icon" style="background:rgba(99,102,241,.18)">🎯</div>
-          <div><div class="sndrop-lbl">FOM 3.0 Backtesting</div><div class="sndrop-sub">Intervention audit · 309 bps wMAPE gain</div></div>
-        </a>
-      </div>
-    </div>
-    <a class="snav-link" href="https://asthaj12.github.io#projects">Projects</a>
-    <a class="snav-link" href="https://asthaj12.github.io#skills">Skills</a>
-  </div>
-  <div class="snav-right">
-    <a class="snav-badge" href="https://linkedin.com/in/asthajain12" target="_blank">LinkedIn ↗</a>
-    <a class="snav-badge" href="https://github.com/asthaj12" target="_blank">GitHub ↗</a>
-  </div>
+<nav class="snav" aria-label="Portfolio and dashboard navigation">
+  <a href="https://asthaj12.github.io/" class="snav-brand">AJ<span> · Portfolio</span></a>
+  <ul class="snav-menu">
+    <li class="sndrop">
+      <details id="snDrop">
+        <summary>Dashboards<svg viewBox="0 0 10 10" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true" focusable="false"><path d="M2 3.5l3 3 3-3"/></svg></summary>
+        <div class="sndrop-menu">
+          <div class="sndrop-grp">
+            <p class="sndrop-gh">Capacity &amp; Supply</p>
+            <ul>
+            <li><a class="sndrop-item" href="https://asthaj12.github.io/ai-customer-strategy-lab/"><div class="sndrop-icon" style="background:rgba(99,102,241,.12)">🧭</div><div><div class="sndrop-lbl">Cloud AI Strategy Lab</div><div class="sndrop-sub">Long-tail AI customers · Unit economics · Capacity pooling</div></div></a></li>
+              <li><a class="sndrop-item" href="https://asthaj12.github.io/cummins-capacity-expansion/"><div class="sndrop-icon" style="background:rgba(99,102,241,.12)">📈</div><div><div class="sndrop-lbl">Long-Range Capacity Planning</div><div class="sndrop-sub">Long-range planning · $12M protected · 15+ lines</div></div></a></li>
+              <li><a class="sndrop-item" href="https://asthaj12.github.io/cummins-capacity-risk/"><div class="sndrop-icon" style="background:rgba(235,104,52,.13)">🏭</div><div><div class="sndrop-lbl">Cummins Capacity &amp; Risk</div><div class="sndrop-sub">Supplier risk · Recovery · $35M averted</div></div></a></li>
+              <li><a class="sndrop-item" href="https://asthaj12.github.io/npi-launch-planning/"><div class="sndrop-icon" style="background:rgba(235,104,52,.13)">🚀</div><div><div class="sndrop-lbl">NPI Launch Planning</div><div class="sndrop-sub">New product intro · Supply readiness</div></div></a></li>
+              <li><a class="sndrop-item" href="https://asthaj12.github.io/replenishment-risk/"><div class="sndrop-icon" style="background:rgba(237,161,0,.12)">📦</div><div><div class="sndrop-lbl">Safety Stock Monitor</div><div class="sndrop-sub">Violation monitor · Risk items</div></div></a></li>
+              <li><a class="sndrop-item" href="https://asthaj12.github.io/logitech-supply-planning/"><div class="sndrop-icon" style="background:rgba(235,104,52,.13)">🌐</div><div><div class="sndrop-lbl">Global S&amp;OP</div><div class="sndrop-sub">Gaming E&amp;O · Supply disruption · Decision forum</div></div></a></li>
+              <li><a class="sndrop-item" href="https://asthaj12.github.io/shopify-demand-forecasting/"><div class="sndrop-icon" style="background:rgba(99,102,241,.12)">🔀</div><div><div class="sndrop-lbl">Network Demand Planning</div><div class="sndrop-sub">Network overview · Forecast RCA · BFCM peak</div></div></a></li>
+            </ul>
+          </div>
+          <div class="sndrop-grp">
+            <p class="sndrop-gh">Forecasting &amp; Decisions</p>
+            <ul>
+              <li><a class="sndrop-item" href="https://asthaj12.github.io/forecast-governance/"><div class="sndrop-icon" style="background:rgba(99,102,241,.12)">📊</div><div><div class="sndrop-lbl">Forecast Governance</div><div class="sndrop-sub">Anomaly triage · Bias correction</div></div></a></li>
+              <li><a class="sndrop-item" href="https://asthaj12.github.io/fom-backtesting/" aria-current="page"><div class="sndrop-icon" style="background:rgba(27,175,122,.12)">🧪</div><div><div class="sndrop-lbl">FOM Backtesting</div><div class="sndrop-sub">Model validation · Historical accuracy</div></div></a></li>
+              <li><a class="sndrop-item" href="https://asthaj12.github.io/forecast-accuracy/"><div class="sndrop-icon" style="background:rgba(27,175,122,.12)">📉</div><div><div class="sndrop-lbl">Forecast Accuracy</div><div class="sndrop-sub">Period recap · Bias by category · Planner adjustments</div></div></a></li>
+              <li><a class="sndrop-item" href="https://asthaj12.github.io/seasonal-event-intelligence/"><div class="sndrop-icon" style="background:rgba(237,161,0,.12)">🎯</div><div><div class="sndrop-lbl">Seasonal Event Intelligence</div><div class="sndrop-sub">Event lift · Demand signals</div></div></a></li>
+              <li><a class="sndrop-item" href="https://asthaj12.github.io/seasonal-planning/"><div class="sndrop-icon" style="background:rgba(99,102,241,.12)">📅</div><div><div class="sndrop-lbl">Scenario Planning</div><div class="sndrop-sub">Scenario dashboard · Planning calendar · Risk flags</div></div></a></li>
+              <li><a class="sndrop-item" href="https://asthaj12.github.io/pricing-demand-response/"><div class="sndrop-icon" style="background:rgba(232,123,164,.14)">💲</div><div><div class="sndrop-lbl">Pricing &amp; Demand Response</div><div class="sndrop-sub">Elasticity &amp; lift · Price event tracking</div></div></a></li>
+              <li><a class="sndrop-item" href="https://asthaj12.github.io/fifa-2026-demand/"><div class="sndrop-icon" style="background:rgba(27,175,122,.12)">⚽</div><div><div class="sndrop-lbl">FIFA Demand</div><div class="sndrop-sub">Host city proximity · Team affinity · Staged commitment</div></div></a></li>
+              <li><a class="sndrop-item" href="https://asthaj12.github.io/snap-monitoring/"><div class="sndrop-icon" style="background:rgba(99,102,241,.12)">📜</div><div><div class="sndrop-lbl">Policy Demand Signals</div><div class="sndrop-sub">Test &amp; control · Demand signal · Hypothesis testing</div></div></a></li>
+            </ul>
+          </div>
+        </div>
+      </details>
+    </li>
+  </ul>
+  <ul class="snav-items">
+    <li><a class="snav-link" href="https://asthaj12.github.io/#projects">Projects</a></li>
+    <li><a class="snav-link" href="https://asthaj12.github.io/#skills">Skills</a></li>
+  </ul>
+  <ul class="snav-right">
+    <li><a class="snav-badge" href="https://linkedin.com/in/asthajain12" target="_blank" rel="noopener">LinkedIn ↗</a></li>
+    <li><a class="snav-badge" href="https://github.com/asthaj12" target="_blank" rel="noopener">GitHub ↗</a></li>
+  </ul>
 </nav>
+<script>
+(function(){
+var nav=document.querySelector('.snav');
+var dd=document.getElementById('snDrop');
+function setNavH(){document.documentElement.style.setProperty('--nav-h',nav.offsetHeight+'px');}
+if(window.ResizeObserver){new ResizeObserver(setNavH).observe(nav);}else{setNavH();window.addEventListener('resize',setNavH);}
+dd.addEventListener('focusout',function(e){if(e.relatedTarget&&!dd.contains(e.relatedTarget)){dd.open=false;}});
+document.addEventListener('pointerdown',function(e){if(dd.open&&!dd.contains(e.target)){dd.open=false;}});
+document.addEventListener('keydown',function(e){if(e.key==='Escape'&&dd.open){dd.open=false;dd.querySelector('summary').focus();}});
+})();
+</script>
 
 <!-- ── Confidentiality banner ────────────────────────────── -->
 <div class="conf-banner">
@@ -202,7 +254,7 @@ tr:hover td{background:#f4f3f0;}
 <!-- ── Demo banner ───────────────────────────────────────── -->
 <div class="demo-banner">
   <span>⚠ DEMO DATA — Illustrative numbers only. Structure and methodology are real; all figures are synthetic.</span>
-  <span class="db-right">FOM 3.0 · Demand Correction Targeting · $3.1B portfolio · 2,400 pilot stores</span>
+  <span class="db-right">Demand Signal Backtesting & Targeting · $3.1B portfolio · 2,400 pilot stores</span>
 </div>
 
 <!-- ── Tab nav ───────────────────────────────────────────── -->
@@ -221,18 +273,22 @@ tr:hover td{background:#f4f3f0;}
 <div id="tab-overview" class="tab-panel active">
 
   <div class="decision-summary">
-    <div class="ds-grid">
+    <div class="ds-grid" style="grid-template-columns:1fr 1fr;">
       <div>
-        <div class="ds-label">Problem</div>
-        <div class="ds-val">42% of $3.1B FOM 2.0 interventions were structurally unwinnable — stores where on-hand inventory already exceeded demand signal. Physics prevented any impact on wMAPE.</div>
+        <div class="ds-label">Decision</div>
+        <div class="ds-val">How do we correct for systematic intraweek temporal bias in demand signals — targeting only the store × SKU × day combinations where a correction is physically executable?</div>
       </div>
       <div>
-        <div class="ds-label">Solution</div>
-        <div class="ds-val">Redesigned targeting to fire only where on-hand &lt; demand signal, Day-0 or Day-1 timing, and no declining demand window. Validated via store × CID × day backtesting.</div>
+        <div class="ds-label">Evidence</div>
+        <div class="ds-val">The base ML model operates at weekly grain, smoothing over predictable intraweek demand spikes driven by benefit-issuance cycles. Temporal autocorrelation analysis of residuals confirmed the bias was persistent (not random). 42% of legacy corrections targeted timesteps where on-hand inventory was already sufficient — physics prevented impact.</div>
       </div>
       <div>
-        <div class="ds-label">Result</div>
-        <div class="ds-val">309 bps wMAPE improvement on a $3.1B portfolio — repositioning ~$95M in demand. Intervention win rate lifted from 49% to 71%. No DS rebuild required.</div>
+        <div class="ds-label">Recommendation</div>
+        <div class="ds-val">Restrict corrections to Day-0 (issuance day) only. Apply temporal holdout backtesting to validate targeting rules before production. Result: 309 bps wMAPE improvement on pilot population.</div>
+      </div>
+      <div>
+        <div class="ds-label">Primary Risk</div>
+        <div class="ds-val">The benefit-cycle signal is strongest in high-SNAP-concentration stores. Corrections applied beyond Day-0 in the cycle introduce noise rather than signal — the system must respect the temporal decay of the issuance effect.</div>
       </div>
     </div>
   </div>
@@ -255,7 +311,7 @@ tr:hover td{background:#f4f3f0;}
       <div class="kpi-delta neutral">31% of Walmart US units</div>
     </div>
     <div class="kpi-card accent-crit">
-      <div class="kpi-label">Misallocated (FOM 2.0)</div>
+      <div class="kpi-label">Misallocated (legacy system)</div>
       <div class="kpi-value">42%</div>
       <div class="kpi-delta down">Structurally unwinnable</div>
     </div>
@@ -269,8 +325,8 @@ tr:hover td{background:#f4f3f0;}
   <!-- Charts row -->
   <div class="chart-grid cols-2">
     <div class="chart-card">
-      <div class="card-title">wMAPE Trend — FOM 2.0 vs FOM 3.0 Pilot (Weeks 1–12)</div>
-      <div class="card-sub">FOM 3.0 pilot progressively diverges from the flat FOM 2.0 baseline</div>
+      <div class="card-title">wMAPE Trend — Demand Correction System v1 vs Demand Signal Backtesting & Targeting Pilot (Weeks 1–12)</div>
+      <div class="card-sub">Demand Signal Backtesting & Targeting pilot progressively diverges from the flat legacy baseline</div>
       <canvas id="ch-wmape-trend"></canvas>
     </div>
     <div class="chart-card">
@@ -334,13 +390,13 @@ tr:hover td{background:#f4f3f0;}
   <!-- Sample audit table -->
   <div class="chart-card">
     <div class="card-title">Sample Intervention Audit Rows</div>
-    <div class="card-sub">Store × CID × Day — illustrative examples from the backtesting audit</div>
+    <div class="card-sub">Store × SKU × Day — illustrative examples from the backtesting audit</div>
     <div class="tbl-wrap">
       <table>
         <thead>
           <tr>
             <th>Store ID</th>
-            <th>CID</th>
+            <th>SKU</th>
             <th>Intervention Type</th>
             <th>On-Hand at Time</th>
             <th>Demand Signal</th>
@@ -349,14 +405,14 @@ tr:hover td{background:#f4f3f0;}
           </tr>
         </thead>
         <tbody>
-          <tr><td>STR-0041</td><td>CID-88312</td><td>Demand Uplift +12%</td><td>14.2 days</td><td>8.1 days</td><td>No lift observed</td><td><span class="badge crit">Unwinnable</span></td></tr>
-          <tr><td>STR-1182</td><td>CID-20047</td><td>Demand Uplift +8%</td><td>3.1 days</td><td>6.8 days</td><td>wMAPE −2.1%</td><td><span class="badge good">Won</span></td></tr>
-          <tr><td>STR-0799</td><td>CID-55901</td><td>Demand Uplift +15%</td><td>11.6 days</td><td>9.3 days</td><td>No lift observed</td><td><span class="badge crit">Unwinnable</span></td></tr>
-          <tr><td>STR-2204</td><td>CID-33780</td><td>Demand Uplift +10%</td><td>2.8 days</td><td>7.2 days</td><td>wMAPE −3.4%</td><td><span class="badge good">Won</span></td></tr>
-          <tr><td>STR-0523</td><td>CID-71144</td><td>Demand Uplift +6%</td><td>4.9 days</td><td>5.1 days</td><td>wMAPE +0.4%</td><td><span class="badge warn">Lost-Winnable</span></td></tr>
-          <tr><td>STR-1867</td><td>CID-44209</td><td>Demand Uplift +18%</td><td>16.0 days</td><td>7.5 days</td><td>No lift observed</td><td><span class="badge crit">Unwinnable</span></td></tr>
-          <tr><td>STR-0308</td><td>CID-92601</td><td>Demand Uplift +9%</td><td>1.7 days</td><td>5.6 days</td><td>wMAPE −4.2%</td><td><span class="badge good">Won</span></td></tr>
-          <tr><td>STR-1599</td><td>CID-18340</td><td>Demand Uplift +11%</td><td>9.3 days</td><td>8.9 days</td><td>No lift observed</td><td><span class="badge crit">Unwinnable</span></td></tr>
+          <tr><td>STR-0041</td><td>SKU-88312</td><td>Demand Uplift +12%</td><td>14.2 days</td><td>8.1 days</td><td>No lift observed</td><td><span class="badge crit">Unwinnable</span></td></tr>
+          <tr><td>STR-1182</td><td>SKU-20047</td><td>Demand Uplift +8%</td><td>3.1 days</td><td>6.8 days</td><td>wMAPE −2.1%</td><td><span class="badge good">Won</span></td></tr>
+          <tr><td>STR-0799</td><td>SKU-55901</td><td>Demand Uplift +15%</td><td>11.6 days</td><td>9.3 days</td><td>No lift observed</td><td><span class="badge crit">Unwinnable</span></td></tr>
+          <tr><td>STR-2204</td><td>SKU-33780</td><td>Demand Uplift +10%</td><td>2.8 days</td><td>7.2 days</td><td>wMAPE −3.4%</td><td><span class="badge good">Won</span></td></tr>
+          <tr><td>STR-0523</td><td>SKU-71144</td><td>Demand Uplift +6%</td><td>4.9 days</td><td>5.1 days</td><td>wMAPE +0.4%</td><td><span class="badge warn">Lost-Winnable</span></td></tr>
+          <tr><td>STR-1867</td><td>SKU-44209</td><td>Demand Uplift +18%</td><td>16.0 days</td><td>7.5 days</td><td>No lift observed</td><td><span class="badge crit">Unwinnable</span></td></tr>
+          <tr><td>STR-0308</td><td>SKU-92601</td><td>Demand Uplift +9%</td><td>1.7 days</td><td>5.6 days</td><td>wMAPE −4.2%</td><td><span class="badge good">Won</span></td></tr>
+          <tr><td>STR-1599</td><td>SKU-18340</td><td>Demand Uplift +11%</td><td>9.3 days</td><td>8.9 days</td><td>No lift observed</td><td><span class="badge crit">Unwinnable</span></td></tr>
         </tbody>
       </table>
     </div>
@@ -371,7 +427,7 @@ tr:hover td{background:#f4f3f0;}
 
   <div class="kpi-row">
     <div class="kpi-card accent-crit">
-      <div class="kpi-label">Baseline wMAPE (FOM 2.0)</div>
+      <div class="kpi-label">Baseline wMAPE (legacy system)</div>
       <div class="kpi-value">18.2%</div>
       <div class="kpi-delta neutral">Pre-pilot average</div>
     </div>
@@ -400,7 +456,7 @@ tr:hover td{background:#f4f3f0;}
   <div class="chart-grid">
     <div class="chart-card full">
       <div class="card-title">wMAPE by Week — Three Cohort Comparison</div>
-      <div class="card-sub">High-benefit-cycle (SNAP issuance) stores show the strongest improvement; FOM 2.0 control remains flat</div>
+      <div class="card-sub">High-benefit-cycle (SNAP issuance) stores show the strongest improvement; legacy demand correction control remains flat</div>
       <canvas id="ch-wmape-cohort"></canvas>
     </div>
   </div>
@@ -450,11 +506,11 @@ tr:hover td{background:#f4f3f0;}
 
   <div class="chart-grid cols-2">
     <div class="chart-card">
-      <div class="card-title">Intervention Pool Waterfall — FOM 2.0 → FOM 3.0</div>
+      <div class="card-title">Intervention Pool Waterfall — Demand Correction System v1 → Demand Signal Backtesting & Targeting</div>
       <div class="card-sub">Each filter removes a structural failure mode; final pool is 38% smaller but far more accurate</div>
       <div class="funnel-wrap" id="funnel-wrap">
         <div class="funnel-step">
-          <div class="funnel-label">FOM 2.0 Original Pool</div>
+          <div class="funnel-label">Demand Correction System v1 Original Pool</div>
           <div class="funnel-bar-track">
             <div class="funnel-bar-fill" style="width:100%;background:var(--sec);">186K</div>
           </div>
@@ -482,7 +538,7 @@ tr:hover td{background:#f4f3f0;}
           <div class="funnel-value">114K</div>
         </div>
         <div class="funnel-step">
-          <div class="funnel-label">FOM 3.0 Final Target Set</div>
+          <div class="funnel-label">Intraweek Signal Correction Final Target Set</div>
           <div class="funnel-bar-track">
             <div class="funnel-bar-fill" style="width:62%;background:var(--good);">114K (62% of original)</div>
           </div>
@@ -499,14 +555,14 @@ tr:hover td{background:#f4f3f0;}
 
   <!-- Rules comparison table -->
   <div class="chart-card" style="margin-top:16px;">
-    <div class="card-title">FOM 2.0 vs FOM 3.0 — Targeting Rules Comparison</div>
+    <div class="card-title">Demand Correction System v1 vs Demand Signal Backtesting & Targeting — Targeting Rules Comparison</div>
     <div class="card-sub">Every rule change was validated through the backtesting framework before deployment</div>
     <div class="tbl-wrap" style="margin-top:12px;">
       <table class="comp-table">
         <thead>
           <tr>
-            <th>FOM 2.0 Rule (Legacy)</th>
-            <th>FOM 3.0 Rule (Redesigned)</th>
+            <th>Demand Correction System v1 Rule (Legacy)</th>
+            <th>Demand Signal Backtesting & Targeting Rule (Redesigned)</th>
           </tr>
         </thead>
         <tbody>
@@ -550,13 +606,22 @@ tr:hover td{background:#f4f3f0;}
       </div>
       <div>
         <div class="ds-label">DS / Engineering Ownership</div>
-        <div class="ds-val">Technical query infrastructure, data pipeline execution, store × CID × day join logic, and production rollout of the new targeting rules.</div>
+        <div class="ds-val">Technical query infrastructure, data pipeline execution, store × SKU × day join logic, and production rollout of the new targeting rules.</div>
       </div>
       <div>
         <div class="ds-label">Key Insight</div>
         <div class="ds-val">No DS model rebuild required. The gain came entirely from changing which stores receive interventions and on which day — a targeting problem, not a modeling problem.</div>
       </div>
     </div>
+  </div>
+
+  <!-- Method pills -->
+  <div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:16px;">
+    <span style="display:inline-flex;align-items:center;gap:5px;padding:5px 12px;background:#eef2ff;border:1px solid #c7d2fe;border-radius:999px;font-size:11px;font-weight:600;color:#4338ca;">⏱ Temporal holdout backtesting</span>
+    <span style="display:inline-flex;align-items:center;gap:5px;padding:5px 12px;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:999px;font-size:11px;font-weight:600;color:#166534;">📈 Autocorrelation analysis of residuals</span>
+    <span style="display:inline-flex;align-items:center;gap:5px;padding:5px 12px;background:#fffbeb;border:1px solid #fde68a;border-radius:999px;font-size:11px;font-weight:600;color:#92400e;">🔍 Intraweek bias detection</span>
+    <span style="display:inline-flex;align-items:center;gap:5px;padding:5px 12px;background:#fdf4ff;border:1px solid #e9d5ff;border-radius:999px;font-size:11px;font-weight:600;color:#6b21a8;">🎯 Day-level signal targeting</span>
+    <span style="display:inline-flex;align-items:center;gap:5px;padding:5px 12px;background:#f0f9ff;border:1px solid #bae6fd;border-radius:999px;font-size:11px;font-weight:600;color:#075985;">🗂 Store × SKU × Day grain</span>
   </div>
 
   <div class="kpi-row">
@@ -566,7 +631,7 @@ tr:hover td{background:#f4f3f0;}
       <div class="kpi-delta neutral">Backtested population</div>
     </div>
     <div class="kpi-card accent-blue">
-      <div class="kpi-label">CIDs Covered</div>
+      <div class="kpi-label">SKUs Covered</div>
       <div class="kpi-value">18,000+</div>
       <div class="kpi-delta neutral">Item-level granularity</div>
     </div>
@@ -578,7 +643,7 @@ tr:hover td{background:#f4f3f0;}
     <div class="kpi-card accent-good">
       <div class="kpi-label">Total Observations</div>
       <div class="kpi-value">4M+</div>
-      <div class="kpi-delta up">Store × CID × Day rows</div>
+      <div class="kpi-delta up">Store × SKU × Day rows</div>
     </div>
   </div>
 
@@ -592,27 +657,27 @@ tr:hover td{background:#f4f3f0;}
             <td><div class="step-num">1</div></td>
             <td>
               <div class="step-label">Historical Data Pull</div>
-              <div class="step-sub">12 weeks of store × CID × day intervention records, on-hand positions, and wMAPE outcomes extracted from production systems</div>
+              <div class="step-sub">12 weeks of store × SKU × day intervention records, on-hand positions, and wMAPE outcomes extracted from production systems</div>
             </td>
           </tr>
           <tr>
             <td><div class="step-num">2</div></td>
             <td>
-              <div class="step-label">Store × CID × Day Segmentation</div>
+              <div class="step-label">Store × SKU × Day Segmentation</div>
               <div class="step-sub">Each intervention labeled with: on-hand at time of fire, day-of-cycle (0–5+), demand trend direction, store SNAP tier</div>
             </td>
           </tr>
           <tr>
             <td><div class="step-num">3</div></td>
             <td>
-              <div class="step-label">Apply Legacy (FOM 2.0) Rules</div>
-              <div class="step-sub">Retroactively applied FOM 2.0 targeting logic to identify which interventions would have fired — establishes the 49% win-rate baseline</div>
+              <div class="step-label">Apply Legacy (Demand Correction System v1) Rules</div>
+              <div class="step-sub">Retroactively applied Demand Correction System v1 targeting logic to identify which interventions would have fired — establishes the 49% win-rate baseline</div>
             </td>
           </tr>
           <tr>
             <td><div class="step-num">4</div></td>
             <td>
-              <div class="step-label">Apply New (FOM 3.0) Rules</div>
+              <div class="step-label">Apply New (Demand Signal Backtesting & Targeting) Rules</div>
               <div class="step-sub">Applied redesigned targeting criteria to the same historical data — identified which interventions would have fired under the new logic</div>
             </td>
           </tr>
@@ -620,7 +685,7 @@ tr:hover td{background:#f4f3f0;}
             <td><div class="step-num">5</div></td>
             <td>
               <div class="step-label">Compare wMAPE Outcomes</div>
-              <div class="step-sub">Measured wMAPE delta between FOM 2.0 and FOM 3.0 targeting populations across all 4M+ store × CID × day observations</div>
+              <div class="step-sub">Measured wMAPE delta between Demand Correction System v1 and Demand Signal Backtesting & Targeting populations across all 4M+ store × SKU × day observations</div>
             </td>
           </tr>
           <tr>
@@ -649,23 +714,23 @@ tr:hover td{background:#f4f3f0;}
   <div class="assumptions-box">
     <strong>Key Methodology Assumptions &amp; Caveats</strong>
     <ul>
-      <li>Backtest uses historical intervention outcomes as a counterfactual proxy — not a true randomized experiment. Selection bias from FOM 2.0 targeting is acknowledged.</li>
-      <li>wMAPE is computed at store × CID × day level; aggregate improvement is a weighted average by demand volume.</li>
+      <li>Backtest uses historical intervention outcomes as a counterfactual proxy — not a true randomized experiment. Selection bias from the legacy correction system's targeting is acknowledged.</li>
+      <li>wMAPE is computed at store × SKU × day level; aggregate improvement is a weighted average by demand volume.</li>
       <li>"Unwinnable" classification requires on-hand inventory to exceed demand signal by at least 2 days of supply at time of intervention fire.</li>
       <li>Day-of-cycle (0, 1, 2, 3+) is measured from the first day of the demand correction window, not calendar day.</li>
       <li>High-benefit-cycle stores = stores with SNAP issuance on or within 2 days of the intervention window.</li>
       <li>The ~$95M demand repositioning estimate assumes the 309 bps improvement applies proportionally across the $3.1B portfolio.</li>
-      <li>All store IDs, CIDs, and outcome figures shown in this dashboard are synthetic for portfolio illustration.</li>
+      <li>All store IDs, SKUs, and outcome figures shown in this dashboard are synthetic for portfolio illustration.</li>
     </ul>
   </div>
 
 </div><!-- /tab-methodology -->
 
 <!-- ── Footer ─────────────────────────────────────────────── -->
-<div class="page-footer">
-  <span>Built by <strong>Astha Jain</strong> · <a href="https://linkedin.com/in/asthajain12" target="_blank">LinkedIn ↗</a></span>
-  <span style="margin-left:auto;">FOM 3.0 · Demand Correction Targeting Redesign · Portfolio Case Study</span>
-</div>
+<footer class="page-footer">
+  <span>Built by <strong>Astha Jain</strong> · <a href="https://linkedin.com/in/asthajain12" target="_blank" rel="noopener">LinkedIn ↗</a> · <a href="https://github.com/asthaj12" target="_blank" rel="noopener">GitHub ↗</a> · <a href="mailto:asthajain.sc@gmail.com">Email</a> · <a href="https://asthaj12.github.io/" target="_blank" rel="noopener">Portfolio ↗</a></span>
+  <span style="margin-left:auto;">Demand Signal Backtesting &amp; Targeting · Portfolio Case Study</span>
+</footer>
 
 </main><!-- /main -->
 
@@ -718,7 +783,7 @@ function tickOpts(){ return { color: '#898781' }; }
       labels: weeks,
       datasets: [
         {
-          label: 'FOM 2.0 Baseline',
+          label: 'Demand Correction System v1 Baseline',
           data: fom2,
           borderColor: GRAY,
           backgroundColor: 'transparent',
@@ -728,7 +793,7 @@ function tickOpts(){ return { color: '#898781' }; }
           tension: 0.3
         },
         {
-          label: 'FOM 3.0 Pilot',
+          label: 'Intraweek Signal Correction Pilot',
           data: fom3,
           borderColor: BLUE,
           backgroundColor: 'rgba(99,102,241,0.08)',
@@ -769,13 +834,13 @@ function tickOpts(){ return { color: '#898781' }; }
       labels: ['Win Rate', 'Misallocation Rate'],
       datasets: [
         {
-          label: 'FOM 2.0',
+          label: 'Demand Correction System v1',
           data: [49, 42],
           backgroundColor: [GRAY, RED],
           borderRadius: 4
         },
         {
-          label: 'FOM 3.0',
+          label: 'Intraweek Signal Correction',
           data: [71, 12],
           backgroundColor: [GOOD, AQUA],
           borderRadius: 4
@@ -911,7 +976,7 @@ function tickOpts(){ return { color: '#898781' }; }
       labels: weeks,
       datasets: [
         {
-          label: 'FOM 2.0 Control',
+          label: 'Demand Correction System v1 Control',
           data: ctrl,
           borderColor: GRAY,
           backgroundColor: 'transparent',
@@ -921,7 +986,7 @@ function tickOpts(){ return { color: '#898781' }; }
           tension: 0.3
         },
         {
-          label: 'FOM 3.0 — Standard Stores (+240 bps)',
+          label: 'Intraweek Signal Correction — Standard Stores (+240 bps)',
           data: std,
           borderColor: BLUE,
           backgroundColor: 'rgba(99,102,241,0.07)',
@@ -931,7 +996,7 @@ function tickOpts(){ return { color: '#898781' }; }
           tension: 0.3
         },
         {
-          label: 'FOM 3.0 — High Benefit-Cycle (+520 bps)',
+          label: 'Intraweek Signal Correction — High Benefit-Cycle (+520 bps)',
           data: hbc,
           borderColor: GOOD,
           backgroundColor: 'rgba(12,163,12,0.07)',
@@ -1075,7 +1140,7 @@ buildDayValueChart('ch-day-value-2');
   new Chart(document.getElementById('ch-coverage'), {
     type: 'bar',
     data: {
-      labels: ['Pilot Stores', 'CIDs (thousands)', 'Backtest Days', 'Observations (M)'],
+      labels: ['Pilot Stores', 'SKUs (thousands)', 'Backtest Days', 'Observations (M)'],
       datasets: [{
         label: 'Scale',
         data: [2400, 18, 84, 4],
@@ -1090,7 +1155,7 @@ buildDayValueChart('ch-day-value-2');
         tooltip: {
           callbacks: {
             label: ctx => {
-              const labels = ['2,400 stores', '18,000+ CIDs', '84 days (12 weeks)', '4M+ observations'];
+              const labels = ['2,400 stores', '18,000+ SKUs', '84 days (12 weeks)', '4M+ observations'];
               return labels[ctx.dataIndex];
             }
           }
